@@ -16,7 +16,7 @@ Open http://localhost:5173. For another device on the same network, use the host
 ## Online modes
 
 - **Free roam:** one shared map, up to 32 connected drivers. Enter a driver name and choose Free roam.
-- **Race rooms:** create a room, share its code or invite link, and invite up to four other drivers. Everyone selects a vehicle and marks ready. The host launches a five-second countdown and a mountain sprint. There must be at least two ready, connected players.
+- **Race rooms:** create a room, share its code or invite link, and invite up to four other drivers. Everyone selects a vehicle and marks ready. The host launches a five-second countdown and a randomly selected mountain sprint with exactly 10 ordered checkpoints. Each race and rematch selects a fresh continuous trail section for everyone in the room. There must be at least two ready, connected players.
 - Race gates must be reached in order. The server owns room membership, countdown timing, checkpoint progress and results. Reset and vehicle changes are locked during the race. The host can end a race and open a rematch. Host ownership transfers if the host leaves.
 - Sessions reconnect automatically, retaining their room slot for 20 seconds. After that the disconnected driver is removed. Rooms and results live in server memory and reset after a server restart or deploy.
 
@@ -24,7 +24,7 @@ Driving controls: WASD/arrows, Space handbrake, Space + W for a low-speed burnou
 
 ## Network model
 
-One Node server serves the game and the `/multiplayer` WebSocket endpoint. Clients send bounded 20 Hz vehicle snapshots. Other cars interpolate position and rotation, with animated wheels, steering and helmeted drivers. The four nearest cars within 160 m use full vehicle models; farther drivers use lightweight silhouettes. Player cars are non-colliding ghosts to avoid latency-induced impacts; map collisions remain local to each browser. Physics is client-simulated, with server-side packet bounds, ordering and checkpoint validation. This is casual multiplayer, not a competitive anti-cheat system.
+One Node server serves the game and the `/multiplayer` WebSocket endpoint. Clients send bounded 20 Hz vehicle snapshots independently of rendering. Idle drivers have a server-seeded pose immediately; invalid cosmetic wheel values cannot discard a valid car pose. Other cars interpolate position and rotation, with animated wheels, steering and helmeted drivers. The four nearest cars within 160 m use full vehicle models; farther drivers use lightweight silhouettes. Player cars are non-colliding ghosts to avoid latency-induced impacts; map collisions remain local to each browser. Physics is client-simulated, with server-side packet bounds, ordering and checkpoint validation. This is casual multiplayer, not a competitive anti-cheat system.
 
 No external database or realtime service is required. Keep **one server instance** unless a shared multiplayer backend is added. The service uses `PORT` and binds `0.0.0.0`. It sends heartbeat pings, retries client connections, and closes connections on shutdown.
 

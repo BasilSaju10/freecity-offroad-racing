@@ -36,10 +36,15 @@ export function createMultiplayer({getState,getVehicle,isReady,onGrid,onLock,onM
   };
   ws.onclose=()=>{id=null;render();document.getElementById('online-count').textContent='Connection interrupted · Reconnecting';clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,Math.min(10000,500*2**retry++));};ws.onerror=()=>{};
  }
- function update(dt,position){
-  remotes.update(dt,position);const now=Date.now(),serverNow=now+clockOffset;
+ function publish(){
+  const now=Date.now();
   if(id&&now-lastPing>3000){lastPing=now;send({type:'ping',sent:now});}
-  if(id&&mode&&now-lastSend>50){lastSend=now;send({type:'state',seq:++seq,state:{...getState(),vehicle:getVehicle()}});}
+  if(id&&mode&&isReady()&&now-lastSend>=50){lastSend=now;send({type:'state',seq:++seq,state:{...getState(),vehicle:getVehicle()}});}
+ }
+ // Publish independently of rendering; paused menus and throttled frames still have a pose.
+ const publishTimer=setInterval(publish,50);window.addEventListener('pagehide',()=>clearInterval(publishTimer),{once:true});
+ function update(dt,position){
+  publish();remotes.update(dt,position);const serverNow=Date.now()+clockOffset;
   if(mode==='room'&&room?.race&&['countdown','racing','results'].includes(room.phase)){
    const race=room.race,me=race.progress.find(p=>p.id===id),count=race.course.checkpoints.length;raceHud.hidden=false;let text;
    if(room.phase==='countdown')text=serverNow<race.startAt?`Race starts in ${Math.ceil((race.startAt-serverNow)/1000)}`:'GO!';
