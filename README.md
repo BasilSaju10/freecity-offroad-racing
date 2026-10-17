@@ -1,4 +1,4 @@
-# FreeCity Offroad Racing
+# OFFRIDE
 
 Offroad driving with 15 selectable vehicles, shared free roam and private races for up to five drivers.
 

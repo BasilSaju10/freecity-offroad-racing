@@ -35,8 +35,8 @@ const skyTexture=new pc.Texture(app.graphicsDevice,{name:'Daylight',width:512,he
 const lighting=pc.EnvLighting.generateLightingSource(skyTexture,{size:64});
 app.scene.envAtlas=pc.EnvLighting.generateAtlas(lighting,{size:256,numReflectionSamples:64,numAmbientSamples:64});
 const world=new C.World({gravity:new C.Vec3(0,-9.81,0)});world.broadphase=createMapBroadphase(C,world);world.solver.iterations=15;world.defaultContactMaterial.friction=.55;world.defaultContactMaterial.restitution=.02;
-$('status').textContent='Loading FreeCity map and collision surfaces...';
-let testingGround;try{testingGround=await loadFreeCity(pc,C,app,world);}catch(e){$('status').textContent='Could not load FreeCity: '+e.message;throw e;}
+$('status').textContent='Loading OFFRIDE map and collision surfaces...';
+let testingGround;try{testingGround=await loadFreeCity(pc,C,app,world);}catch(e){$('status').textContent='Could not load OFFRIDE: '+e.message;throw e;}
 
 // Units: meters, kilograms, seconds. A heavy SUV-like starting tune, not manufacturer telemetry.
 const tuning={mass:2500,wheelbase:2.856924,track:1.655536,radius:.39975,restLength:.36,stiffness:32,compression:4.8,rebound:4.2,travel:.20,engineForce:3300,brake:42,rideHeight:.54165,rearDrive:false,eye:[-.43,.90,.25]};
@@ -74,7 +74,7 @@ addEventListener('keydown',e=>{if($('vehicle-picker').open||document.getElementB
 // Pointer lock keeps mouse movement relative while the camera follows the vehicle.
 function fallbackMouseLook(){softMouseLook=true;canvas.style.cursor='none';$('mouse-hint').textContent='MOUSE LOOK ON · ESC TO RELEASE';$('status').textContent='Preview mouse look active. A regular browser supports full cursor lock.';}
 canvas.addEventListener('click',()=>{if(document.pointerLockElement!==canvas){try{const request=canvas.requestPointerLock();request?.catch?.(fallbackMouseLook);}catch{fallbackMouseLook();}}});
-addEventListener('keydown',e=>{if(e.code==='Escape'){softMouseLook=false;canvas.style.cursor='grab';$('mouse-hint').textContent='CLICK SCENE TO LOOK AROUND';$('status').textContent='FreeCity offroad · SUV all-wheel drive';}});
+addEventListener('keydown',e=>{if(e.code==='Escape'){softMouseLook=false;canvas.style.cursor='grab';$('mouse-hint').textContent='CLICK SCENE TO LOOK AROUND';$('status').textContent='OFFRIDE · All-wheel drive';}});
 let orbitDragging=false;
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('mousedown',e=>{if(e.button===2)orbitDragging=true;});addEventListener('mouseup',()=>orbitDragging=false);
