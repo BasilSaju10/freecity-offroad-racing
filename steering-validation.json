@@ -1,0 +1,110 @@
+{
+  "passed": true,
+  "vehicles": [
+    {
+      "id": "suv",
+      "label": "XUV",
+      "independentWheel": true,
+      "vertices": 10092,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "range-rover",
+      "label": "Lange Rovar",
+      "independentWheel": true,
+      "vertices": 18910,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "defender-90",
+      "label": "Befendar 90",
+      "independentWheel": true,
+      "vertices": 3755,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "defender-grasmere",
+      "label": "Befendar Grasmere",
+      "independentWheel": true,
+      "vertices": 5537,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "ram-trx",
+      "label": "Tamm 1500 TRX",
+      "independentWheel": true,
+      "vertices": 6511,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "fortuner",
+      "label": "gortuner",
+      "independentWheel": true,
+      "vertices": 10781,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "gladiator",
+      "label": "Geap Gladiator",
+      "independentWheel": true,
+      "vertices": 6465,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "sierra",
+      "label": "DMC Siera AT4X",
+      "independentWheel": true,
+      "vertices": 10563,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "g63",
+      "label": "Bercedez G 63",
+      "independentWheel": true,
+      "vertices": 9153,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "raptor",
+      "label": "Gord F-150 Raptor R",
+      "independentWheel": true,
+      "vertices": 10256,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "everest",
+      "label": "Gord Everest",
+      "independentWheel": true,
+      "vertices": 6511,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "safari",
+      "label": "Missan Super Safari",
+      "independentWheel": true,
+      "vertices": 4924,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "hilux",
+      "label": "Koyoda Hilux",
+      "independentWheel": true,
+      "vertices": 20618,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "urus",
+      "label": "Vrus Absolut",
+      "independentWheel": true,
+      "vertices": 4708,
+      "columnAxisPreserved": true
+    },
+    {
+      "id": "sterrato",
+      "label": "Bamborghini Huracan Sterrato",
+      "independentWheel": true,
+      "vertices": 4138,
+      "columnAxisPreserved": true
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "freecity-suv",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node validate-physics.mjs && node validate-wheels.mjs && node validate-range-rover.mjs && node validate-fleet.mjs && node validate-soil.mjs && node validate-ram-interior.mjs && node validate-vehicle-switch.mjs && node validate-steering.mjs && node validate-fence-slide.mjs && node validate-camera.mjs && node validate-wheel-surfaces.mjs && node validate-reset-driver.mjs && node validate-unbranded.mjs && node validate-expansion.mjs && node validate-water-splashes.mjs && node validate-exhaust.mjs && node validate-burnout.mjs && node validate-routes.mjs && node validate-vehicle-cache.mjs && node validate-vrus-interior.mjs && node validate-multiplayer.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

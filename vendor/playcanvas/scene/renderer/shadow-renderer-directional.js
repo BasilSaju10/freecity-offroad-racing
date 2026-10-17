@@ -1,0 +1,344 @@
+import { Debug } from '../../core/debug.js';
+import { math } from '../../core/math/math.js';
+import { Vec3 } from '../../core/math/vec3.js';
+import { Mat4 } from '../../core/math/mat4.js';
+import { BoundingBox } from '../../core/shape/bounding-box.js';
+import {
+    LIGHTTYPE_DIRECTIONAL, SHADOWUPDATE_NONE
+} from '../constants.js';
+import { ShadowMap } from './shadow-map.js';
+import { RenderPassShadowDirectional } from './render-pass-shadow-directional.js';
+
+/**
+ * @import { Camera } from '../camera.js'
+ * @import { GraphicsDevice } from '../../platform/graphics/graphics-device.js'
+ * @import { Light } from '../light.js'
+ * @import { Renderer } from './renderer.js'
+ * @import { ShadowRenderer } from './shadow-renderer.js'
+ */
+
+// Per-cascade scratch state for shadow camera fitting. PCSS retains each cascade's caster
+// bounds in its render data so the union includes cached cascades as well as updating ones.
+const _unionSceneAabb = new BoundingBox();
+const _cascadeAabbs = [new BoundingBox(), new BoundingBox(), new BoundingBox(), new BoundingBox()];
+const _cascadeAabbValid = [false, false, false, false];
+const _cascadeRadii = [0, 0, 0, 0];
+const center = new Vec3();
+const shadowCamView = new Mat4();
+
+const aabbPoints = [
+    new Vec3(), new Vec3(), new Vec3(), new Vec3(),
+    new Vec3(), new Vec3(), new Vec3(), new Vec3()
+];
+
+// evaluate depth range the aabb takes in the space of the camera
+const _depthRange = { min: 0, max: 0 };
+function getDepthRange(cameraViewMatrix, aabbMin, aabbMax) {
+    aabbPoints[0].x = aabbPoints[1].x = aabbPoints[2].x = aabbPoints[3].x = aabbMin.x;
+    aabbPoints[1].y = aabbPoints[3].y = aabbPoints[7].y = aabbPoints[5].y = aabbMin.y;
+    aabbPoints[2].z = aabbPoints[3].z = aabbPoints[6].z = aabbPoints[7].z = aabbMin.z;
+    aabbPoints[4].x = aabbPoints[5].x = aabbPoints[6].x = aabbPoints[7].x = aabbMax.x;
+    aabbPoints[0].y = aabbPoints[2].y = aabbPoints[4].y = aabbPoints[6].y = aabbMax.y;
+    aabbPoints[0].z = aabbPoints[1].z = aabbPoints[4].z = aabbPoints[5].z = aabbMax.z;
+
+    let minz = 9999999999;
+    let maxz = -9999999999;
+
+    for (let i = 0; i < 8; ++i) {
+        cameraViewMatrix.transformPoint(aabbPoints[i], aabbPoints[i]);
+        const z = aabbPoints[i].z;
+        if (z < minz) minz = z;
+        if (z > maxz) maxz = z;
+    }
+
+    _depthRange.min = minz;
+    _depthRange.max = maxz;
+    return _depthRange;
+}
+
+class ShadowRendererDirectional {
+    /** @type {Renderer} */
+    renderer;
+
+    /** @type {ShadowRenderer} */
+    shadowRenderer;
+
+    /** @type {GraphicsDevice} */
+    device;
+
+    constructor(renderer, shadowRenderer) {
+        this.renderer = renderer;
+        this.shadowRenderer = shadowRenderer;
+        this.device = renderer.device;
+    }
+
+    /**
+     * Ensure the shadow map exists and the light is marked visible. When a camera is supplied,
+     * bind its shadow buffer even for cached shadows: forward lighting needs the sampler without
+     * a shadow pass or cull (#3588).
+     *
+     * @param {Light} light - The shadow-casting light.
+     * @param {Camera|null} [camera] - The camera that will sample the shadow map, if any.
+     */
+    prepareShadowMap(light, camera = null) {
+
+        // force light visibility if function was manually called
+        light.visibleThisFrame = true;
+
+        if (!light._shadowMap) {
+            light._shadowMap = ShadowMap.create(this.device, light);
+        }
+
+        if (camera) {
+            for (let cascade = 0; cascade < light.numCascades; cascade++) {
+                this.shadowRenderer.prepareFace(light, camera, cascade);
+            }
+        }
+    }
+
+    // cull directional shadow map. prepareShadowMap(light) must have been called first.
+    cull(light, comp, camera, casters = null, cascadeMask = this.getCascadeMask(light)) {
+
+        Debug.assert(light._shadowMap, 'ShadowRendererDirectional.cull requires prepareShadowMap() to have been called for the light first.');
+
+        // generate splits for the cascades
+        const nearDist = camera._nearClip;
+        this.generateSplitDistances(light, nearDist, Math.min(camera._farClip, light.shadowDistance));
+
+        // PASS 1: per-cascade culling + per-cascade visible-caster AABB building. Defers the depth-range
+        // tightening (which moves the shadow camera and sets farClip) until pass 2 so that PCSS
+        // can use a stable cross-cascade union AABB rather than each cascade's own jumpy
+        // visible-caster bounds.
+        for (let cascade = 0; cascade < light.numCascades; cascade++) {
+
+            // if manually controlling cascade rendering and the cascade does not render this frame
+            if (!(cascadeMask & (1 << cascade))) {
+                continue;
+            }
+
+            const lightRenderData = light.getRenderData(camera, cascade);
+            const shadowCam = lightRenderData.shadowCamera;
+
+            // viewport
+            lightRenderData.shadowViewport.copy(light.cascades[cascade]);
+            lightRenderData.shadowScissor.copy(light.cascades[cascade]);
+
+            const shadowCamNode = shadowCam._node;
+            const lightNode = light._node;
+
+            shadowCamNode.setPosition(lightNode.getPosition());
+
+            // Camera looks down the negative Z, and directional light points down the negative Y
+            shadowCamNode.setRotation(lightNode.getRotation());
+            shadowCamNode.rotateLocal(-90, 0, 0);
+
+            // get camera's frustum corners for the cascade, convert them to world space and find their center
+            const frustumNearDist = cascade === 0 ? nearDist : light._shadowCascadeDistances[cascade - 1];
+            const frustumFarDist = light._shadowCascadeDistances[cascade];
+            const frustumPoints = camera.getFrustumCorners(frustumNearDist, frustumFarDist);
+            center.set(0, 0, 0);
+            const cameraWorldMat = camera.node.getWorldTransform();
+            for (let i = 0; i < 8; i++) {
+                cameraWorldMat.transformPoint(frustumPoints[i], frustumPoints[i]);
+                center.add(frustumPoints[i]);
+            }
+            center.mulScalar(1 / 8);
+
+            // radius of the world space bounding sphere for the frustum slice
+            let radius = 0;
+            for (let i = 0; i < 8; i++) {
+                const dist = frustumPoints[i].sub(center).length();
+                if (dist > radius) {
+                    radius = dist;
+                }
+            }
+
+            // axis of light coordinate system
+            const right = shadowCamNode.right;
+            const up = shadowCamNode.up;
+            const lightDir = shadowCamNode.forward;
+
+            // transform the sphere's center into the center of the shadow map, pixel aligned.
+            // this makes the shadow map stable and avoids shimmering on the edges when the camera moves
+            const sizeRatio = 0.25 * light._shadowResolution / radius;
+            const x = Math.ceil(center.dot(up) * sizeRatio) / sizeRatio;
+            const y = Math.ceil(center.dot(right) * sizeRatio) / sizeRatio;
+
+            const scaledUp = up.mulScalar(x);
+            const scaledRight = right.mulScalar(y);
+            const dot = center.dot(lightDir);
+            const scaledDir = lightDir.mulScalar(dot);
+            center.add2(scaledUp, scaledRight).add(scaledDir);
+
+            // look at the center from far away to include all casters during culling
+            shadowCamNode.setPosition(center);
+            shadowCamNode.translateLocal(0, 0, 1000000);
+            shadowCam.nearClip = 0.01;
+            shadowCam.farClip = 2000000;
+            shadowCam.orthoHeight = radius;
+
+            // cull shadow casters
+            shadowCam.updateFrustum();
+            this.shadowRenderer.cullShadowCasters(comp, light, lightRenderData.visibleCasters, shadowCam, casters);
+
+            const cascadeFlag = 1 << cascade;
+            const visibleCasters = lightRenderData.visibleCasters;
+            const origNumVisibleCasters = visibleCasters.length;
+
+            let numVisibleCasters = 0;
+            const cascadeAabb = _cascadeAabbs[cascade];
+
+            // exclude all mesh instances that are hidden for this cascade.
+            // find out AABB of visible shadow casters
+            for (let i = 0; i < origNumVisibleCasters; i++) {
+                const meshInstance = visibleCasters[i];
+                if (meshInstance.shadowCascadeMask & cascadeFlag) {
+                    visibleCasters[numVisibleCasters++] = meshInstance;
+                    if (numVisibleCasters === 1) {
+                        cascadeAabb.copy(meshInstance.aabb);
+                    } else {
+                        cascadeAabb.add(meshInstance.aabb);
+                    }
+                }
+            }
+
+            // remove empty tail
+            if (origNumVisibleCasters !== numVisibleCasters) {
+                visibleCasters.length = numVisibleCasters;
+            }
+
+            _cascadeAabbValid[cascade] = numVisibleCasters > 0;
+            _cascadeRadii[cascade] = radius;
+
+            if (light._isPcss) {
+                lightRenderData.shadowCasterAabbValid = numVisibleCasters > 0;
+                if (lightRenderData.shadowCasterAabbValid) {
+                    lightRenderData.shadowCasterAabb ??= new BoundingBox();
+                    lightRenderData.shadowCasterAabb.copy(cascadeAabb);
+                }
+            }
+        }
+
+        // PCSS depth fitting must not depend on which cascades happen to update this frame.
+        // Include the last culled bounds of cached cascades without culling their casters again.
+        // Non-PCSS shadows retain per-cascade tightening for depth precision.
+        let useUnion = false;
+        if (light._isPcss) {
+            for (let cascade = 0; cascade < light.numCascades; cascade++) {
+                const renderData = light.getRenderData(camera, cascade);
+                if (!renderData.shadowCasterAabbValid) continue;
+                if (!useUnion) {
+                    _unionSceneAabb.copy(renderData.shadowCasterAabb);
+                    useUnion = true;
+                } else {
+                    _unionSceneAabb.add(renderData.shadowCasterAabb);
+                }
+            }
+        }
+
+        // PASS 2: depth-range tightening per cascade. PCSS uses the cross-cascade union AABB
+        // to tighten requested cascades, including ones with no own casters. Cached cascades keep
+        // the camera fitting that matches their existing shadow-map contents.
+        // Non-PCSS uses the per-cascade AABB and skips cascades with no casters (nothing to render).
+        for (let cascade = 0; cascade < light.numCascades; cascade++) {
+            if (!(cascadeMask & (1 << cascade))) continue;
+
+            let aabbSource;
+            if (useUnion) {
+                aabbSource = _unionSceneAabb;
+            } else if (_cascadeAabbValid[cascade]) {
+                aabbSource = _cascadeAabbs[cascade];
+            } else {
+                continue;
+            }
+
+            const lightRenderData = light.getRenderData(camera, cascade);
+            const shadowCam = lightRenderData.shadowCamera;
+            const shadowCamNode = shadowCam._node;
+
+            // calculate depth range of the chosen AABB from the point of view of the shadow camera
+            shadowCamView.copy(shadowCamNode.getWorldTransform()).invert();
+            const depthRange = getDepthRange(shadowCamView, aabbSource.getMin(), aabbSource.getMax());
+
+            // adjust shadow camera's near and far plane to the depth range. Made slightly larger
+            // to avoid clipping on near / far plane.
+            shadowCamNode.translateLocal(0, 0, depthRange.max + 0.1);
+            shadowCam.farClip = depthRange.max - depthRange.min + 0.2;
+
+            lightRenderData.projectionCompensation = _cascadeRadii[cascade];
+        }
+    }
+
+    // function to generate frustum split distances
+    generateSplitDistances(light, nearDist, farDist) {
+
+        light._shadowCascadeDistances.fill(farDist);
+        for (let i = 1; i < light.numCascades; i++) {
+
+            //  lerp between linear and logarithmic distance, called practical split distance
+            const fraction = i / light.numCascades;
+            const linearDist = nearDist + (farDist - nearDist) * fraction;
+            const logDist = nearDist * (farDist / nearDist) ** fraction;
+            const dist = math.lerp(linearDist, logDist, light.cascadeDistribution);
+            light._shadowCascadeDistances[i - 1] = dist;
+        }
+    }
+
+    /**
+     * @param {Light} light - The directional light.
+     * @returns {number} Bit mask of cascades needing initialization or enabled by the overrides.
+     */
+    getCascadeMask(light) {
+        if (light._shadowCascadesInvalidated) {
+            return (1 << light.numCascades) - 1;
+        }
+
+        let mask = 0;
+        for (let cascade = 0; cascade < light.numCascades; cascade++) {
+            if (light.shadowUpdateOverrides?.[cascade] !== SHADOWUPDATE_NONE) {
+                mask |= 1 << cascade;
+            }
+        }
+        return mask;
+    }
+
+    /**
+     * Create a render pass for directional light shadow rendering for a specified camera.
+     *
+     * @param {Light} light - The directional light.
+     * @param {Camera} camera - The camera.
+     * @returns {RenderPassShadowDirectional|null} - The render pass if the shadow rendering is
+     * required, or null otherwise.
+     */
+    getLightRenderPass(light, camera) {
+
+        Debug.assert(light && light._type === LIGHTTYPE_DIRECTIONAL);
+
+        let renderPass = null;
+        if (this.shadowRenderer.needsShadowRendering(light)) {
+
+            const cascadeMask = this.getCascadeMask(light);
+            if (!cascadeMask) {
+                return null;
+            }
+
+            // shadow cascades have more faces rendered within a single render pass
+            const faceCount = light.numShadowFaces;
+
+            // prepare render targets / cameras for rendering
+            let shadowCamera;
+            for (let face = 0; face < faceCount; face++) {
+                shadowCamera = this.shadowRenderer.prepareFace(light, camera, face);
+            }
+
+            renderPass = new RenderPassShadowDirectional(this.device, this.shadowRenderer, light, camera, cascadeMask);
+
+            // setup render pass using any of the cameras, they all have the same pass related properties
+            this.shadowRenderer.setupRenderPass(renderPass, shadowCamera, renderPass.allCascadesRendering);
+        }
+
+        return renderPass;
+    }
+}
+
+export { ShadowRendererDirectional };

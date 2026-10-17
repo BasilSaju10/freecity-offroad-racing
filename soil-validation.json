@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "frameRateIndependent": true,
+  "staysAttachedWhenStopped": true,
+  "waterWashesMud": true,
+  "dirtAndMudDistinct": true
+}

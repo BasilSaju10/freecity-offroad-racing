@@ -1,0 +1,155 @@
+{
+  "passed": true,
+  "vehicles": [
+    {
+      "id": "suv",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 72.7,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "range-rover",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 72.7,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "defender-90",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 70,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.95
+    },
+    {
+      "id": "defender-grasmere",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 71.4,
+      "maxSpeedKmh": 49,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "ram-trx",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 73.9,
+      "maxSpeedKmh": 53,
+      "minUprightDot": 0.97
+    },
+    {
+      "id": "fortuner",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 70.9,
+      "maxSpeedKmh": 48,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "gladiator",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 73,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.97
+    },
+    {
+      "id": "sierra",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 73.7,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.97
+    },
+    {
+      "id": "g63",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 71.7,
+      "maxSpeedKmh": 52,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "raptor",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 74.2,
+      "maxSpeedKmh": 55,
+      "minUprightDot": 0.97
+    },
+    {
+      "id": "everest",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 71,
+      "maxSpeedKmh": 48,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "safari",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 71.7,
+      "maxSpeedKmh": 52,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "hilux",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 71.5,
+      "maxSpeedKmh": 50,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "urus",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 72.5,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.96
+    },
+    {
+      "id": "sterrato",
+      "sharedDrivingTune": true,
+      "vehicleScale": 1.12,
+      "wheelGeometry": true,
+      "spawnContacts": 4,
+      "distanceIn8Seconds": 71.3,
+      "maxSpeedKmh": 51,
+      "minUprightDot": 0.96
+    }
+  ]
+}

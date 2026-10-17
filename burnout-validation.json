@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "rearTyresAndRimsSpin": true,
+  "frontWheelsHold": true,
+  "dustFromStationarySlip": true,
+  "mudColouredDust": true,
+  "handbrakeWithoutThrottle": true,
+  "particleLimit": 96
+}

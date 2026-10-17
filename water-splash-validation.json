@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "vehicles": 15,
+  "entryBursts": true,
+  "speedAndDepthDependent": true,
+  "airborneAndStationarySuppressed": true,
+  "frameRateIndependent": true,
+  "boundedParticles": 220,
+  "foamAndSprayFade": true
+}

@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "topSpeedKmh": 153.9,
+  "zeroTo100Seconds": 6.9,
+  "brakingFrom100Seconds": 3.3,
+  "stoppingDistanceMeters": 46.2,
+  "openingLogsDistanceIn8Seconds": 72.9,
+  "openingLogsMaxSpeedKmh": 53.5,
+  "openingLogsMinimumUprightDot": 0.95,
+  "physicsMsFor8SimulatedSeconds": 924,
+  "fenceCollision": true,
+  "treeAndRockCollisionRays": true,
+  "broadphaseComparedToExhaustive": true,
+  "sceneryColliders": 625,
+  "waterCrossings": true
+}

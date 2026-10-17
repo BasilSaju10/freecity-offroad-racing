@@ -1,0 +1,704 @@
+{
+  "suv": [
+    {
+      "position": [
+        -0.46035,
+        -0.10764,
+        2.48075
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0307,
+      "componentId": 10,
+      "material": "Detail 11",
+      "mouthCenter": [
+        -0.46035000681877136,
+        -0.10763999819755554,
+        2.46875
+      ],
+      "nearestMeshDistance": 0.023013934662430575,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "range-rover": [
+    {
+      "position": [
+        -0.58486,
+        -0.08786,
+        2.52285
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0452,
+      "componentId": 20,
+      "material": "Meshesrowersportexhaust11Mtl",
+      "mouthCenter": [
+        -0.5848600268363953,
+        -0.08786000311374664,
+        2.510849952697754
+      ],
+      "nearestMeshDistance": 0.03715339537932579,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        0.59124,
+        -0.08786,
+        2.52285
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0452,
+      "componentId": 21,
+      "material": "Meshesrowersportexhaust11Mtl",
+      "mouthCenter": [
+        0.5912399888038635,
+        -0.08786000311374664,
+        2.510849952697754
+      ],
+      "nearestMeshDistance": 0.037153393370241775,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        -0.49254,
+        -0.08786,
+        2.52285
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0452,
+      "componentId": 22,
+      "material": "Meshesrowersportexhaust11Mtl",
+      "mouthCenter": [
+        -0.49254000186920166,
+        -0.08786000311374664,
+        2.510849952697754
+      ],
+      "nearestMeshDistance": 0.037153393370241775,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        0.4989,
+        -0.08786,
+        2.52285
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0452,
+      "componentId": 23,
+      "material": "Meshesrowersportexhaust11Mtl",
+      "mouthCenter": [
+        0.49889999628067017,
+        -0.08786000311374664,
+        2.510849952697754
+      ],
+      "nearestMeshDistance": 0.03715339337005053,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "defender-90": [
+    {
+      "position": [
+        -0.90543,
+        -0.02075,
+        1.81363
+      ],
+      "direction": [
+        -0.964795,
+        0.039992,
+        0.259945
+      ],
+      "radius": 0.0335,
+      "componentId": 88,
+      "material": "BlackHole_Mat1",
+      "mouthCenter": [
+        -0.8938500285148621,
+        -0.021229999139904976,
+        1.8105100393295288
+      ],
+      "nearestMeshDistance": 0.02399982553172149,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "defender-grasmere": [
+    {
+      "position": [
+        -0.36313,
+        -0.10746,
+        1.9987
+      ],
+      "direction": [
+        0.0,
+        -0.059892,
+        0.998205
+      ],
+      "radius": 0.025,
+      "componentId": 32,
+      "material": "Cromados",
+      "mouthCenter": [
+        -0.36313000321388245,
+        -0.10673999786376953,
+        1.9867199659347534
+      ],
+      "nearestMeshDistance": 0.017740331778325274,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        -0.44161,
+        -0.10746,
+        1.9987
+      ],
+      "direction": [
+        0.0,
+        -0.059892,
+        0.998205
+      ],
+      "radius": 0.025,
+      "componentId": 33,
+      "material": "Cromados",
+      "mouthCenter": [
+        -0.4416100084781647,
+        -0.10673999786376953,
+        1.9867199659347534
+      ],
+      "nearestMeshDistance": 0.017740312747112,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "ram-trx": [
+    {
+      "position": [
+        0.60773,
+        -0.04375,
+        3.04711
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.09,
+      "componentId": 37,
+      "material": "RAM_1500TRX_2021Coloured_Material",
+      "mouthCenter": [
+        0.607729971408844,
+        -0.04374999925494194,
+        3.0351099967956543
+      ],
+      "nearestMeshDistance": 0.03470793010726381,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        -0.60773,
+        -0.04375,
+        3.04711
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.09,
+      "componentId": 38,
+      "material": "RAM_1500TRX_2021Coloured_Material",
+      "mouthCenter": [
+        -0.607729971408844,
+        -0.04374999925494194,
+        3.0351099967956543
+      ],
+      "nearestMeshDistance": 0.03470793010726381,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "fortuner": [
+    {
+      "position": [
+        -0.51291,
+        -0.09816,
+        2.14781
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0555,
+      "componentId": 6,
+      "material": "steel.002",
+      "mouthCenter": [
+        -0.512910008430481,
+        -0.09815999865531921,
+        2.135809898376465
+      ],
+      "nearestMeshDistance": 0.044271134114138445,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        0.51206,
+        -0.09816,
+        2.14781
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0555,
+      "componentId": 7,
+      "material": "steel.002",
+      "mouthCenter": [
+        0.5120599865913391,
+        -0.09815999865531921,
+        2.135809898376465
+      ],
+      "nearestMeshDistance": 0.044271134114138445,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "gladiator": [
+    {
+      "position": [
+        -0.6323,
+        -0.0007,
+        2.75542
+      ],
+      "direction": [
+        0.0,
+        -0.119145,
+        0.992877
+      ],
+      "radius": 0.0269,
+      "componentId": 19,
+      "material": "Jeep_GladiatorRewardRecycled_2019Coloured_Material",
+      "mouthCenter": [
+        -0.6323000192642212,
+        0.0007300000288523734,
+        2.743499994277954
+      ],
+      "nearestMeshDistance": 0.015214577228524153,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "g63": [
+    {
+      "position": [
+        0.92913,
+        -0.26716,
+        0.72914
+      ],
+      "direction": [
+        0.841178,
+        0.0,
+        0.540758
+      ],
+      "radius": 0.0587,
+      "componentId": 30,
+      "material": "M:MercedesAMG_G63SUVRewardRecycled_2020Coloured_Material1",
+      "mouthCenter": [
+        0.9190400242805481,
+        -0.26715999841690063,
+        0.7226499915122986
+      ],
+      "nearestMeshDistance": 0.030696258286678803,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        0.93036,
+        -0.26716,
+        0.58456
+      ],
+      "direction": [
+        0.841178,
+        0.0,
+        0.540758
+      ],
+      "radius": 0.0587,
+      "componentId": 31,
+      "material": "M:MercedesAMG_G63SUVRewardRecycled_2020Coloured_Material1",
+      "mouthCenter": [
+        0.9202700257301331,
+        -0.26715999841690063,
+        0.5780699849128723
+      ],
+      "nearestMeshDistance": 0.030696116713088452,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        -0.92913,
+        -0.26716,
+        0.72914
+      ],
+      "direction": [
+        -0.841178,
+        0.0,
+        0.540758
+      ],
+      "radius": 0.0587,
+      "componentId": 32,
+      "material": "M:MercedesAMG_G63SUVRewardRecycled_2020Coloured_Material1",
+      "mouthCenter": [
+        -0.9190400242805481,
+        -0.26715999841690063,
+        0.7226499915122986
+      ],
+      "nearestMeshDistance": 0.030696258286678803,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        -0.93036,
+        -0.26716,
+        0.58456
+      ],
+      "direction": [
+        -0.841178,
+        0.0,
+        0.540758
+      ],
+      "radius": 0.0587,
+      "componentId": 33,
+      "material": "M:MercedesAMG_G63SUVRewardRecycled_2020Coloured_Material1",
+      "mouthCenter": [
+        -0.9202700257301331,
+        -0.26715999841690063,
+        0.5780699849128723
+      ],
+      "nearestMeshDistance": 0.030696116713088452,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "raptor": [
+    {
+      "position": [
+        -0.74167,
+        -0.02129,
+        3.05066
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0575,
+      "componentId": 104,
+      "material": "Exhaust",
+      "mouthCenter": [
+        -0.7416700124740601,
+        -0.021290000528097153,
+        3.0386600494384766
+      ],
+      "nearestMeshDistance": 0.050885176071650516,
+      "calibration": "measured tailpipe opening"
+    },
+    {
+      "position": [
+        0.7415,
+        -0.02129,
+        3.05066
+      ],
+      "direction": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "radius": 0.0575,
+      "componentId": 105,
+      "material": "Exhaust",
+      "mouthCenter": [
+        0.7415000200271606,
+        -0.021290000528097153,
+        3.0386600494384766
+      ],
+      "nearestMeshDistance": 0.050885176071650516,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "everest": [
+    {
+      "position": [
+        0.48219,
+        -0.18792,
+        2.28121
+      ],
+      "direction": [
+        0.0,
+        -0.607339,
+        0.794443
+      ],
+      "radius": 0.0314,
+      "componentId": 4,
+      "material": "interior.0",
+      "mouthCenter": [
+        0.48219001293182373,
+        -0.18062999844551086,
+        2.2716801166534424
+      ],
+      "nearestMeshDistance": 0.017687707998737024,
+      "calibration": "measured tailpipe opening"
+    }
+  ],
+  "sierra": [
+    {
+      "position": [
+        -0.74,
+        -0.13,
+        2.96
+      ],
+      "direction": [
+        0,
+        -0.242536,
+        0.970143
+      ],
+      "radius": 0.045,
+      "componentId": 83,
+      "material": "Plasitc_Diff",
+      "calibration": "concealed rear outlet beneath lower bumper corner"
+    },
+    {
+      "position": [
+        0.74,
+        -0.13,
+        2.96
+      ],
+      "direction": [
+        0,
+        -0.242536,
+        0.970143
+      ],
+      "radius": 0.045,
+      "componentId": 88,
+      "material": "Plasitc_Diff",
+      "calibration": "concealed rear outlet beneath lower bumper corner"
+    }
+  ],
+  "urus": [
+    {
+      "position": [
+        0.7340160608291626,
+        -0.2619205117225647,
+        2.29947296333313
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 62,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.038365252407323906,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        0.8549973964691162,
+        -0.2619205117225647,
+        2.2934955711364746
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 63,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.03836538850876993,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        0.7212219834327698,
+        -0.19655320048332214,
+        2.34794012260437
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 64,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.03836540319040566,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        0.8422033190727234,
+        -0.19655320048332214,
+        2.341962730407715
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 65,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.03836538850876993,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        -0.7340171337127686,
+        -0.2619205117225647,
+        2.29947296333313
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 66,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.038365252407323906,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        -0.8549984693527222,
+        -0.2619205117225647,
+        2.2934955711364746
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 67,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.03836538850876993,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        -0.7212231159210205,
+        -0.19655320048332214,
+        2.34794012260437
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 68,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.0383653977164686,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        -0.8422044515609741,
+        -0.19655320048332214,
+        2.341962730407715
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.045,
+      "componentId": 69,
+      "material": "Material.001",
+      "nearestMeshDistance": 0.03836538850876993,
+      "calibration": "measured native rear exhaust opening"
+    }
+  ],
+  "sterrato": [
+    {
+      "position": [
+        0.3548339605331421,
+        0.11276360601186752,
+        2.108160888671875
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.052,
+      "componentId": 145,
+      "material": "H:Lamborghini_HuracanSterratoRewardRecycled_2021Coloure_577ac6e",
+      "nearestMeshDistance": 0.05178095407853453,
+      "calibration": "measured native rear exhaust opening"
+    },
+    {
+      "position": [
+        -0.35483402013778687,
+        0.11276360601186752,
+        2.108160888671875
+      ],
+      "direction": [
+        0,
+        0,
+        1
+      ],
+      "radius": 0.052,
+      "componentId": 146,
+      "material": "H:Lamborghini_HuracanSterratoRewardRecycled_2021Coloure_577ac6e",
+      "nearestMeshDistance": 0.051780957006338876,
+      "calibration": "measured native rear exhaust opening"
+    }
+  ],
+  "safari": [
+    {
+      "position": [
+        -0.67,
+        -0.23,
+        2.46
+      ],
+      "direction": [
+        0,
+        -0.242536,
+        0.970143
+      ],
+      "radius": 0.04,
+      "material": "Black Metal",
+      "calibration": "concealed single rear outlet below bumper; supplied model has no separate exhaust tip"
+    }
+  ],
+  "hilux": [
+    {
+      "position": [
+        0.69,
+        -0.22,
+        2.55
+      ],
+      "direction": [
+        0,
+        -0.242536,
+        0.970143
+      ],
+      "radius": 0.04,
+      "material": "wheel_rf.1",
+      "calibration": "concealed single rear outlet below bumper; supplied model has no separate exhaust tip"
+    }
+  ]
+}

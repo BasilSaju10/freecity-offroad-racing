@@ -1,0 +1,22 @@
+import {createDrivingSoil,mudParticleColor} from './driving-soil.js';
+import {Mat4} from './vendor/playcanvas/core/math/mat4.js';
+import * as C from './vendor/cannon-es.js';
+import {Quat} from './vendor/playcanvas/core/math/quat.js';
+import {Vec3} from './vendor/playcanvas/core/math/vec3.js';
+import {readFileSync,writeFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const source=readFileSync(new URL('./main.js',import.meta.url),'utf8');
+const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
+const controls=source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const rendering=source.slice(source.indexOf('// Capture suspension'),source.indexOf('function updateCamera'));
+class Visual{p=new Vec3();q=new Quat();setPosition(...a){this.p.copy(a[0] instanceof Vec3?a[0]:new Vec3(...a));}setRotation(q){this.q.copy(q);}getPosition(){return this.p;}}
+const factory=new Function('C','pc','world','Visual',`const testingGround={applyWheelSurface(v,b,t,i,h){v.wheelInfos[i].frictionSlip=h?1:2.5;}};`+setup+`const keys=new Set();let steering=0;const steeringVisual=null;const bodyVisual=new Visual();const wheelVisuals=Array.from({length:4},()=>new Visual()),loadedWheels=Array.from({length:4},()=>new Visual()),loadedBrakes=Array.from({length:4},()=>new Visual());const wheelState=vehicle.wheelInfos.map(()=>({previousLength:tuning.restLength,length:tuning.restLength,previousSpin:0,spin:0,previousSteer:0,steer:0}));const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));${controls}${rendering};return {keys,chassis,vehicle,wheelState,sync,loadedWheels,loadedBrakes};`);
+
+const world=new C.World({gravity:new C.Vec3(0,-9.81,0)});const ground=new C.Body({mass:0,shape:new C.Plane(),quaternion:new C.Quaternion().setFromEuler(-Math.PI/2,0,0)});world.addBody(ground);const r=factory(C,{Quat,Vec3},world,Visual);r.chassis.position.set(0,.542,0);const step=seconds=>{for(let i=0;i<seconds*120;i++){world.step(1/120);r.sync();}};step(2);r.keys.add('Space');r.keys.add('KeyW');step(2);
+assert(Math.abs(r.wheelState[2].spin)>40&&Math.abs(r.wheelState[3].spin)>40,'both rear wheels spin');assert(Math.abs(r.wheelState[0].spin)<1&&Math.abs(r.wheelState[1].spin)<1,'front wheels hold the car');assert(Math.hypot(r.chassis.velocity.x,r.chassis.velocity.z)<1,'stationary burnout');assert(r.vehicle.wheelInfos[0].brake>0&&r.vehicle.wheelInfos[2].brake===0);assert(r.vehicle.wheelInfos[0].engineForce===0&&r.vehicle.wheelInfos[2].engineForce>0);
+class Entity extends Visual{constructor(name){super();this.name=name;this.children=[];this.enabled=true;}addChild(e){e.parent=this;this.children.push(e);}addComponent(t,o){this[t]={...o,meshInstances:[{setParameter(){}}]};}findComponents(){return [];}getWorldTransform(){return new Mat4();}setLocalScale(){}setLocalEulerAngles(){}}
+const context={createRadialGradient:()=>({addColorStop(){}}),fillRect(){}};globalThis.document={createElement:()=>({getContext:()=>context})};const pc={Entity,Vec3,Quat,Mat4,StandardMaterial:class{update(){}},Color:class{constructor(...v){this.values=v;}},Texture:class{setSource(){}},BLEND_NORMAL:2,CULLFACE_NONE:0};
+const root=new Entity('Scene'),model=new Entity('Car'),wheels=Array.from({length:4},()=>new Entity('Wheel'));root.addChild(model);const map={surfaceAt:()=>({name:'DIRT TRAIL'}),surfaceInfo:()=>({name:'DIRT TRAIL'}),heightAt:()=>0},soil=createDrivingSoil(pc,{root,graphicsDevice:{}},map,{getRotation:()=>new Quat()}),entry={model,wheels};soil.attach(entry,{radius:r.vehicle.wheelInfos[0].radius},1,()=>false);for(let i=0;i<60;i++)soil.update(entry,r.vehicle,r.chassis,{radius:r.vehicle.wheelInfos[0].radius},1/60,r.wheelState);
+assert(soil.particles.filter(p=>p.life>0&&p.dust).length>10,'rear slip throws dust while stationary');assert.deepEqual(soil.particles[0].e.render.material.emissive.values,mudParticleColor,'dust matches mud pigment');assert.deepEqual(soil.particles.find(p=>!p.dust).e.render.material.diffuse.values,mudParticleColor);assert.equal(soil.particles.length,96,'bounded dust and mud pool');
+const angle=r.wheelState[2].spin;r.keys.delete('KeyW');step(.3);assert.equal(r.wheelState[2].spin,angle,'Space alone locks rear wheels');
+const report={passed:true,rearTyresAndRimsSpin:true,frontWheelsHold:true,dustFromStationarySlip:true,mudColouredDust:true,handbrakeWithoutThrottle:true,particleLimit:96};writeFileSync(new URL('./burnout-validation.json',import.meta.url),JSON.stringify(report,null,2));console.log(report);

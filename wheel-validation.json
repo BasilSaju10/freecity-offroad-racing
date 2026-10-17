@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "forwardSpinRadians": -26.36034164592399,
+  "coastingSpinRadians": -51.62900368769353,
+  "tireGroundErrorMeters": -0.000019820548173288266,
+  "calipersIndependent": true,
+  "ackermannSteering": true
+}

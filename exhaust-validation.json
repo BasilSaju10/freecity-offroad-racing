@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "vehicles": 15,
+  "outlets": 34,
+  "perVehiclePlacement": true,
+  "sideAndDownwardExits": true,
+  "accelerationBurst": true,
+  "uphillDensity": true,
+  "brakingAndCoasting": true,
+  "frameRateIndependent": true,
+  "boundedPuffs": 256
+}

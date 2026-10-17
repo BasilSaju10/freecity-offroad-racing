@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "vehicles": 15,
+  "roadWheelAssemblies": 60,
+  "solidWheelMaterials": 84,
+  "spareWheelCovers": true,
+  "originalGeometryAndTexturesRetained": true,
+  "windowsStillTransparent": true
+}

@@ -1,0 +1,20 @@
+{
+  "position": [
+    -0.43,
+    0.48,
+    -0.64
+  ],
+  "axis": [
+    0,
+    0.342,
+    0.94
+  ],
+  "radius": 0.177,
+  "rebuiltDashboard": true,
+  "removedOccludingFaces": 612,
+  "cockpitEye": [
+    -0.43,
+    0.78,
+    -0.1
+  ]
+}

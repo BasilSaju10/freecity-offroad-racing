@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "nearestTrackProjection": true,
+  "keepsTravelDirection": true,
+  "driverVehicles": 15,
+  "helmetAndFace": true,
+  "handsFollowSteering": true,
+  "firstPersonHeadHidden": true
+}

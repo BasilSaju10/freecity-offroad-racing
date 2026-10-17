@@ -1,0 +1,485 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "id": "suv",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.6,
+      "slideMeters": 0
+    },
+    {
+      "id": "suv",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.34,
+      "slideMeters": 7.25
+    },
+    {
+      "id": "suv",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.51,
+      "slideMeters": 0.16
+    },
+    {
+      "id": "suv",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.22,
+      "slideMeters": 37.94
+    },
+    {
+      "id": "range-rover",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.6,
+      "slideMeters": 0
+    },
+    {
+      "id": "range-rover",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.34,
+      "slideMeters": 7.25
+    },
+    {
+      "id": "range-rover",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.51,
+      "slideMeters": 0.16
+    },
+    {
+      "id": "range-rover",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.22,
+      "slideMeters": 37.94
+    },
+    {
+      "id": "defender-90",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.4,
+      "slideMeters": 0
+    },
+    {
+      "id": "defender-90",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.23,
+      "slideMeters": 7.93
+    },
+    {
+      "id": "defender-90",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.33,
+      "slideMeters": 0.06
+    },
+    {
+      "id": "defender-90",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.16,
+      "slideMeters": 38.19
+    },
+    {
+      "id": "defender-grasmere",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.7,
+      "slideMeters": 0
+    },
+    {
+      "id": "defender-grasmere",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.28,
+      "slideMeters": 7.76
+    },
+    {
+      "id": "defender-grasmere",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.65,
+      "slideMeters": 0
+    },
+    {
+      "id": "defender-grasmere",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.17,
+      "slideMeters": 38.16
+    },
+    {
+      "id": "ram-trx",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.49,
+      "slideMeters": 0
+    },
+    {
+      "id": "ram-trx",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.88,
+      "slideMeters": 4.75
+    },
+    {
+      "id": "ram-trx",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.33,
+      "slideMeters": 0.03
+    },
+    {
+      "id": "ram-trx",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.4,
+      "slideMeters": 36.63
+    },
+    {
+      "id": "fortuner",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.7,
+      "slideMeters": 0
+    },
+    {
+      "id": "fortuner",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.44,
+      "slideMeters": 5.43
+    },
+    {
+      "id": "fortuner",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.65,
+      "slideMeters": 0
+    },
+    {
+      "id": "fortuner",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.21,
+      "slideMeters": 38.17
+    },
+    {
+      "id": "gladiator",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.3,
+      "slideMeters": 0
+    },
+    {
+      "id": "gladiator",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.44,
+      "slideMeters": 6.75
+    },
+    {
+      "id": "gladiator",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.31,
+      "slideMeters": 0.01
+    },
+    {
+      "id": "gladiator",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.19,
+      "slideMeters": 37.2
+    },
+    {
+      "id": "sierra",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.4,
+      "slideMeters": 0
+    },
+    {
+      "id": "sierra",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.7,
+      "slideMeters": 6.54
+    },
+    {
+      "id": "sierra",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.33,
+      "slideMeters": 0.01
+    },
+    {
+      "id": "sierra",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.41,
+      "slideMeters": 37.43
+    },
+    {
+      "id": "g63",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.8,
+      "slideMeters": 0
+    },
+    {
+      "id": "g63",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.4,
+      "slideMeters": 7.39
+    },
+    {
+      "id": "g63",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.67,
+      "slideMeters": 0.16
+    },
+    {
+      "id": "g63",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.25,
+      "slideMeters": 37.46
+    },
+    {
+      "id": "raptor",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.4,
+      "slideMeters": 0
+    },
+    {
+      "id": "raptor",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.67,
+      "slideMeters": 6.63
+    },
+    {
+      "id": "raptor",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.33,
+      "slideMeters": 0.02
+    },
+    {
+      "id": "raptor",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.39,
+      "slideMeters": 37.48
+    },
+    {
+      "id": "everest",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.9,
+      "slideMeters": 0
+    },
+    {
+      "id": "everest",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.56,
+      "slideMeters": 6.93
+    },
+    {
+      "id": "everest",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.67,
+      "slideMeters": 0.33
+    },
+    {
+      "id": "everest",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.27,
+      "slideMeters": 36.43
+    },
+    {
+      "id": "safari",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.9,
+      "slideMeters": 0
+    },
+    {
+      "id": "safari",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.41,
+      "slideMeters": 6.8
+    },
+    {
+      "id": "safari",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.67,
+      "slideMeters": 0.2
+    },
+    {
+      "id": "safari",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.22,
+      "slideMeters": 37.57
+    },
+    {
+      "id": "hilux",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 3.1,
+      "slideMeters": 0
+    },
+    {
+      "id": "hilux",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.37,
+      "slideMeters": 7.73
+    },
+    {
+      "id": "hilux",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 3,
+      "slideMeters": 0
+    },
+    {
+      "id": "hilux",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.2,
+      "slideMeters": 37.48
+    },
+    {
+      "id": "urus",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.8,
+      "slideMeters": 0
+    },
+    {
+      "id": "urus",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.45,
+      "slideMeters": 7.24
+    },
+    {
+      "id": "urus",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.67,
+      "slideMeters": 0.15
+    },
+    {
+      "id": "urus",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.29,
+      "slideMeters": 37.37
+    },
+    {
+      "id": "sterrato",
+      "speedKmh": 43.2,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.6,
+      "slideMeters": 0
+    },
+    {
+      "id": "sterrato",
+      "speedKmh": 43.2,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.39,
+      "slideMeters": 7.89
+    },
+    {
+      "id": "sterrato",
+      "speedKmh": 144,
+      "glancing": false,
+      "contact": true,
+      "minX": 2.51,
+      "slideMeters": 0.02
+    },
+    {
+      "id": "sterrato",
+      "speedKmh": 144,
+      "glancing": true,
+      "contact": true,
+      "minX": 1.28,
+      "slideMeters": 38.06
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "vehicle": "fortuner",
+  "rimVertices": {
+    "FL": 2725,
+    "FR": 2724,
+    "RL": 2725,
+    "RR": 2724
+  },
+  "logoFacesRemoved": 12899
+}

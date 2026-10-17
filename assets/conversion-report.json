@@ -1,0 +1,84 @@
+{
+  "removed_branding_geometry": [
+    {
+      "object": "T:SK_Body_Bones_101_001_SK_Body_Bones_101_001_MI_Exhaust_021",
+      "raised_badge_vertices": 1723
+    },
+    {
+      "object": "T:SK_Body_Bones_101_001_SK_Body_Bones_101_001_MI_Exhaust_022",
+      "raised_badge_vertices": 1636
+    },
+    {
+      "object": "T:SK_Trunk_101_001_SK_Trunk_101_001_MI_Light_015",
+      "raised_badge_vertices": 5195
+    },
+    {
+      "object": "T:SK_Trunk_101_001_SK_Trunk_101_001_MI_Light_016",
+      "raised_badge_vertices": 192
+    },
+    {
+      "object": "T:SK_Trunk_101_001_SK_Trunk_101_001_MI_Light_017",
+      "raised_badge_vertices": 4965
+    },
+    {
+      "object": "T:SM_Bumper_F_101_SM_Bumper_F_101_MI_1350010001_005",
+      "raised_badge_vertices": 2303
+    },
+    {
+      "object": "T:SM_Bumper_F_101_SM_Bumper_F_101_MI_1350010001_006",
+      "raised_badge_vertices": 1603
+    },
+    {
+      "object": "T:SM_Bumper_F_101_SM_Bumper_F_101_MI_1350010001_007",
+      "raised_badge_vertices": 225
+    },
+    {
+      "object": "T:polySurface5",
+      "faces": 14
+    },
+    {
+      "object": "T:polySurface6",
+      "faces": 14
+    },
+    {
+      "object": "T:polySurface7",
+      "faces": 14
+    },
+    {
+      "object": "T:polySurface8",
+      "faces": 14
+    },
+    {
+      "object": "T:SK_Trunk_101_001_SK_Trunk_101_001_MI_Light_018",
+      "faces": 36
+    },
+    {
+      "object": "T:SM_Bumper_F_101_SM_Bumper_F_101_MI_1350010001_008",
+      "faces": 22
+    }
+  ],
+  "wheel_centers_source_meters": {
+    "FL": [
+      0.8279502391815186,
+      -1.5708742141723633,
+      0.39632144570350647
+    ],
+    "FR": [
+      -0.8275854587554932,
+      -1.5708742141723633,
+      0.3818897008895874
+    ],
+    "RL": [
+      0.8279502391815186,
+      1.2860493659973145,
+      0.39632120728492737
+    ],
+    "RR": [
+      -0.8275854587554932,
+      1.2860493659973145,
+      0.39632120728492737
+    ]
+  },
+  "axle_midpoint": -0.14241242408752441,
+  "note": "Dedicated logo decals removed; tire and wheel materials replaced with unmarked materials. Geometry baked into independently animated wheel assemblies."
+}

@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "freeRoamShared": true,
+  "roomIsolation": true,
+  "maxRaceDrivers": 5,
+  "hostOnlyStart": true,
+  "readyRequired": true,
+  "orderedCheckpoints": true,
+  "resultsAndRematch": true,
+  "reconnection": true,
+  "hostTransfer": true,
+  "disconnectCleanup": true
+}

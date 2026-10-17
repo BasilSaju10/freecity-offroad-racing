@@ -1,0 +1,216 @@
+{
+  "vehicles": [
+    {
+      "id": "defender-90",
+      "materialNames": [
+        "Rubber_Y_Mat1",
+        "Plain unlettered rubber",
+        "BrakesColour_Mat1",
+        "RAM_1500TRX_2021_Wheel1A_3D_3DWheel2A_Material",
+        "wheel:Wheel_Customisable_A_Mat1",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "0b53992686a54f03a352cc07b45b88c9fa2e5303ef6814784f6265868e6694c3"
+    },
+    {
+      "id": "defender-grasmere",
+      "materialNames": [
+        "mascara negra",
+        "wire_000000000",
+        "Borracha 💻.001",
+        "Pintura 💻.003",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "14412c98ebb11dd1992eb2e34aed47077e41582422f103a20742eda96b39c31f"
+    },
+    {
+      "id": "everest",
+      "materialNames": [
+        "roda.0",
+        "roda.1",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "81515ad8723a691c17685a2eeb3f38466ce5176542aa15dcf89b78e8faf21adb"
+    },
+    {
+      "id": "fortuner",
+      "materialNames": [
+        "steel.002",
+        "Tyre",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "5ac1256e21d36fea393cbd29d665169a6037f0343259935d1200b696d33ae34e"
+    },
+    {
+      "id": "g63",
+      "materialNames": [
+        "M:MercedesAMG_G63SUVRewardRecycled_2020_Wheel1A_3D_3DWh_e61ba9a",
+        "Plain unlettered rubber",
+        "Plain alloy centre",
+        "M:MercedesAMG_G63SUVRewardRecycled_2020_CallipersCallip_20b6442",
+        "M:MercedesAMG_G63SUVRewardRecycled_2020_CallipersCallip_217da1a"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "eaa4d91b7ee3b5ba34a0e779d7d30b6b086107e4b286e14387667a7ef548d475"
+    },
+    {
+      "id": "gladiator",
+      "materialNames": [
+        "Jeep_GladiatorRewardRecycled_2019_Wheel1A_3D_3DWheel1A_Material",
+        "Plain unlettered rubber",
+        "Plain alloy centre",
+        "Jeep_GladiatorRewardRecycled_2019_CallipersCalliperA_Zo_d2ddb8c"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "748abc8bfc0b3b61d79c545b68df4c5abe916462919af74ae41bac02e3c1a017"
+    },
+    {
+      "id": "hilux",
+      "materialNames": [
+        "wheel_rf.0",
+        "wheel_rf.1",
+        "wheel_rf.2",
+        "wheel_rf.3",
+        "wheel_rf.4",
+        "wheel_rf.5",
+        "wheel_rf.6",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "97940356749368941cf23045a7bf70668f4bd63ba695c3c18d54611426d2eca9"
+    },
+    {
+      "id": "ram-trx",
+      "materialNames": [
+        "RAM_1500TRX_2021_Wheel1A_3D_3DWheel2A_Material",
+        "Plain unlettered rubber",
+        "Plain alloy centre",
+        "RAM_1500TRX_2021_CallipersCalliperGloss_Material1"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "d130b452c1cc27aa87e48a756354bca737e0dbffa08b5ba5f2b38c74ef2b590c"
+    },
+    {
+      "id": "range-rover",
+      "materialNames": [
+        "Meshesrowerwheel0031Mtl",
+        "Meshesrowerwheel1Mtl",
+        "Meshesrowerwheel0011Mtl",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "0daeaf8526020abfbb6c176eaae8353ae32684c77f2a9be7ce458273b09ca2da"
+    },
+    {
+      "id": "raptor",
+      "materialNames": [
+        "Breaks",
+        "material",
+        "Rim_T",
+        "tire",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "e5080f4b3838b1ff736ffab67c24b6f6a0e5686edc58e9e5bf793c789ef9e51f"
+    },
+    {
+      "id": "safari",
+      "materialNames": [
+        "ORANGE",
+        "Material.041",
+        "Material.042",
+        "Material.043",
+        "Default.001",
+        "Material.045",
+        "Material.047",
+        "Material.006",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "115bc25dcbc6c633d3d83157e5e9eaa1888a9c3e1d4e7572608d3e42deb98179"
+    },
+    {
+      "id": "sierra",
+      "materialNames": [
+        "alum_brush",
+        "BlackPaint",
+        "Tyre",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "9db2df2bd7d8c888c4153eec913a259ab58cc46c7c3581e82b4d5ecd92f5ee08"
+    },
+    {
+      "id": "sterrato",
+      "materialNames": [
+        "H:Lamborghini_HuracanSterratoRewardRecycled_2021_Wheel1_300b231",
+        "Plain unlettered rubber",
+        "Plain alloy centre",
+        "H:Lamborghini_HuracanSterratoRewardRecycled_2021_Callip_16aa0a2",
+        "H:Lamborghini_HuracanSterratoRewardRecycled_2021_Callip_a8d91e0"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "7db291537679d117172af61a951c30d55f85fdcbf8c27042910695f6222e7094"
+    },
+    {
+      "id": "urus",
+      "materialNames": [
+        "Material",
+        "Material.054",
+        "Material.053",
+        "CRBN JANTE.005",
+        "SDC.002",
+        "SDC.003",
+        "Material.072",
+        "plaquette de frein.015",
+        "visse.015",
+        "CRBN JANTE.009",
+        "Material.082",
+        "Material.081",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "2c21dac4a68083abcb10fae9b23e1ac879c07936cacc04ad84f138f735881fdc"
+    },
+    {
+      "id": "suv",
+      "materialNames": [
+        "Unmarked rubber",
+        "Detail 8",
+        "Unmarked alloy",
+        "Plain unlettered rubber",
+        "Plain alloy centre"
+      ],
+      "correctedTransparentMaterials": [],
+      "binaryUnchanged": true,
+      "binarySha256": "6c0fd6b3f00333ba5fb6d7a3a580ffdba42ada7cd34ba82cc4d905a41b7e5ce5"
+    }
+  ]
+}

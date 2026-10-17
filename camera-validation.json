@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "cases": 360,
+  "minimumExteriorAngleDegrees": 4.6,
+  "terrainClearanceMeters": 0.65,
+  "slopesAndRoll": true,
+  "hillObstruction": true,
+  "cockpitUnchanged": true
+}

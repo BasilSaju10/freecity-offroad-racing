@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "newRoutes": 4,
+  "rockRoutes": 2,
+  "addedRocks": 208,
+  "terrainSamples": 81,
+  "nearestTrackReset": true
+}

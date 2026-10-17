@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "opaqueDashboard": true,
+  "nonMetallicCabin": true,
+  "matteSurfaces": true,
+  "primaryUvVertices": 43284,
+  "uvRange": {
+    "min": [
+      -2.757812023162842,
+      -1.988281011581421
+    ],
+    "max": [
+      3.398437976837158,
+      0.9937250018119812
+    ]
+  }
+}

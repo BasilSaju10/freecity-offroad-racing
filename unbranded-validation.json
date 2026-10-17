@@ -1,0 +1,128 @@
+{
+  "passed": true,
+  "vehicles": [
+    {
+      "vehicle": "vehicle",
+      "removedBadgeFaces": 4718,
+      "removedLetterComponents": 201,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 4440,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "range-rover",
+      "removedBadgeFaces": 1666,
+      "removedLetterComponents": 188,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 7719,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "defender-90",
+      "removedBadgeFaces": 3705,
+      "removedLetterComponents": 88,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 17860,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "defender-grasmere",
+      "removedBadgeFaces": 14303,
+      "removedLetterComponents": 48,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 28191,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "ram-trx",
+      "removedBadgeFaces": 3783,
+      "removedLetterComponents": 136,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 17860,
+      "plainSteeringHub": true,
+      "plainDashboardFaces": 574
+    },
+    {
+      "vehicle": "fortuner",
+      "removedBadgeFaces": 11097,
+      "removedLetterComponents": 568,
+      "sourceLogoObjects": 1,
+      "plainWheelSidewalls": 24236,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "gladiator",
+      "removedBadgeFaces": 2984,
+      "removedLetterComponents": 82,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 13200,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "sierra",
+      "removedBadgeFaces": 12517,
+      "removedLetterComponents": 399,
+      "sourceLogoObjects": 23,
+      "plainWheelSidewalls": 18920,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "g63",
+      "removedBadgeFaces": 3675,
+      "removedLetterComponents": 192,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 8122,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "raptor",
+      "removedBadgeFaces": 11961,
+      "removedLetterComponents": 152,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 14024,
+      "plainSteeringHub": true,
+      "plainCabinScreenFaces": 2937
+    },
+    {
+      "vehicle": "everest",
+      "removedBadgeFaces": 1337,
+      "removedLetterComponents": 24,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 5984,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "safari",
+      "removedBadgeFaces": 1436,
+      "removedLetterComponents": 3,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 37532,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "hilux",
+      "removedBadgeFaces": 15276,
+      "removedLetterComponents": 682,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 12404,
+      "plainSteeringHub": true,
+      "additionalHiluxLetters": 233
+    },
+    {
+      "vehicle": "urus",
+      "removedBadgeFaces": 1447,
+      "removedLetterComponents": 24,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 149099,
+      "plainSteeringHub": true
+    },
+    {
+      "vehicle": "sterrato",
+      "removedBadgeFaces": 6876,
+      "removedLetterComponents": 27,
+      "sourceLogoObjects": 0,
+      "plainWheelSidewalls": 10974,
+      "plainSteeringHub": true
+    }
+  ]
+}

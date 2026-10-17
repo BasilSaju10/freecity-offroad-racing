@@ -1,0 +1,78 @@
+{
+  "vehicles": [
+    {
+      "id": "defender-90",
+      "correctedTransparentMaterials": [
+        "Rubber_Y_Mat1",
+        "TyreCover_Y_Mat1",
+        "BrakesColour_Mat1",
+        "RAM_1500TRX_2021_Wheel1A_3D_3DWheel2A_Material",
+        "wheel:Wheel_Customisable_A_Mat1"
+      ]
+    },
+    {
+      "id": "defender-grasmere",
+      "correctedTransparentMaterials": [
+        "mascara negra",
+        "wire_000000000",
+        "Borracha 💻.001",
+        "Pintura 💻.003"
+      ]
+    },
+    {
+      "id": "fortuner",
+      "correctedTransparentMaterials": [
+        "Tyre"
+      ]
+    },
+    {
+      "id": "g63",
+      "correctedTransparentMaterials": [
+        "M:MercedesAMG_G63SUVRewardRecycled_2020_Wheel1A_3D_3DWh_e61ba9a",
+        "M:MercedesAMG_G63SUVRewardRecycled_2020_CallipersCallip_20b6442",
+        "M:MercedesAMG_G63SUVRewardRecycled_2020_CallipersCallip_217da1a"
+      ]
+    },
+    {
+      "id": "gladiator",
+      "correctedTransparentMaterials": [
+        "Jeep_GladiatorRewardRecycled_2019_Wheel1A_3D_3DWheel1A_Material",
+        "Jeep_GladiatorRewardRecycled_2019_CallipersCalliperA_Zo_d2ddb8c"
+      ]
+    },
+    {
+      "id": "ram-trx",
+      "correctedTransparentMaterials": [
+        "RAM_1500TRX_2021_Wheel1A_3D_3DWheel2A_Material",
+        "RAM_1500TRX_2021_CallipersCalliperGloss_Material1"
+      ]
+    },
+    {
+      "id": "range-rover",
+      "correctedTransparentMaterials": [
+        "Meshesrowerwheel0041Mtl",
+        "Meshesrowerwheel0031Mtl",
+        "Meshesrowerwheel0021Mtl",
+        "Meshesrowerwheel1Mtl",
+        "Meshesrowerwheel0011Mtl"
+      ]
+    },
+    {
+      "id": "sierra",
+      "correctedTransparentMaterials": [
+        "alum_brush",
+        "BlackPaint",
+        "GMC_RED",
+        "Tyre"
+      ]
+    },
+    {
+      "id": "suv",
+      "correctedTransparentMaterials": [
+        "Unmarked rubber",
+        "Detail 8",
+        "Unmarked alloy"
+      ]
+    }
+  ]
+}

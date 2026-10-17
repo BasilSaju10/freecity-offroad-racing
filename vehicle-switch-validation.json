@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "transitions": 225,
+  "roadPositionPreserved": true,
+  "headingPreserved": true,
+  "momentumPreserved": true,
+  "cockpitProfiles": [
+    "suv",
+    "range-rover",
+    "defender-90",
+    "defender-grasmere",
+    "ram-trx",
+    "fortuner",
+    "gladiator",
+    "sierra",
+    "g63",
+    "raptor",
+    "everest",
+    "safari",
+    "hilux",
+    "urus",
+    "sterrato"
+  ]
+}

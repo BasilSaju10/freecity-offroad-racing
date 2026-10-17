@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "widthMeters": 920,
+  "lengthMeters": 920,
+  "terrainCollisionBeyondOldBounds": true,
+  "visualAndColliderScaleMatched": true,
+  "chromeTrimMaterials": 7
+}
