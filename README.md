@@ -28,7 +28,7 @@ Driving controls: WASD/arrows, Space handbrake, Space + W for a low-speed burnou
 
 One Node server serves the game and the `/multiplayer` WebSocket endpoint. Clients send bounded 20 Hz vehicle snapshots independently of rendering. Idle drivers have a server-seeded pose immediately; invalid cosmetic wheel values cannot discard a valid car pose. Other cars interpolate position and rotation, with animated wheels, steering and helmeted drivers. The four nearest cars within 160 m use full vehicle models; farther drivers use lightweight silhouettes. Player cars are non-colliding ghosts to avoid latency-induced impacts; map collisions remain local to each browser. Physics is client-simulated, with server-side packet bounds, ordering and checkpoint validation. This is casual multiplayer, not a competitive anti-cheat system.
 
-No external database or realtime service is required. Keep **one server instance** unless a shared multiplayer backend is added. The service uses `PORT` and binds `0.0.0.0`. It sends heartbeat pings, retries client connections, and closes connections on shutdown.
+No external database or realtime service is required. Keep **one server instance** unless a shared multiplayer backend is added. The service uses `PORT` and binds `0.0.0.0`. It sends heartbeat pings, retries client connections, automatically rejoins free roam after a server restart, and closes connections on shutdown.
 
 ## Render
 
