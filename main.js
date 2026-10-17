@@ -271,7 +271,7 @@ async function loadCar(id='range-rover',authoritative=false){
 
 window.playground={app,world,vehicle,chassis,tuning,reset,get modelReady(){return modelReady;},map:testingGround};
 addEventListener('error',e=>{$('error').hidden=false;$('error').textContent='The playground could not start.\n'+e.message;});
-globalThis.offrideLoading?.stage(98,'Preparing your vehicle');selectCamera(2);app.start();await loadCar(activeVehicleId);if(!modelReady)throw Error('Could not prepare the selected vehicle');
+globalThis.offrideLoading?.stage(98,'Preparing your vehicle');selectCamera(0);app.start();await loadCar(activeVehicleId);if(!modelReady)throw Error('Could not prepare the selected vehicle');
 const remoteDrivers=createRemoteDrivers(pc,app,camera,vehicleProfiles,createHelmetDriver);
 const checkpoint=new pc.Entity('Next race checkpoint');app.root.addChild(checkpoint);checkpoint.enabled=false;
 const checkpointMaterial=material('Race checkpoint',[.12,.65,.48]);checkpointMaterial.emissive=new pc.Color(.08,.4,.22);checkpointMaterial.update();
