@@ -10,6 +10,8 @@ const meta=JSON.parse(await readFile(new URL('./assets/map/physics.json',import.
 export const server=createServer(async(req,res)=>{try{
  if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405);res.end();return;}
  const url=new URL(req.url,'http://localhost');if(url.pathname==='/healthz'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true}));return;}
+ // Send visitors using the original link to the same multiplayer world.
+ if(req.headers.host==='freecity-offroad-racing.onrender.com'&&(url.pathname==='/'||url.pathname==='/index.html')){res.writeHead(302,{Location:'https://awd-2upb.onrender.com/'+url.search,'Cache-Control':'no-store'});res.end();return;}
  let name=decodeURIComponent(url.pathname);if(name==='/')name='/index.html';const path=resolve(root,'.'+name),rel=relative(root,path);
  if(!path.startsWith(resolve(root)+sep)||rel.split(/[\\/]/).some(p=>p.startsWith('.'))||/node_modules|editable\.blend/i.test(rel)||!['.html','.js','.css','.json','.glb','.png','.jpg','.bin'].includes(extname(path))){res.writeHead(404);res.end('Not found');return;}
  const canonical=await realpath(path);if(!canonical.startsWith(resolve(root)+sep))throw Error('Outside public root');const info=await stat(path);if(!info.isFile())throw Error('Not a file');

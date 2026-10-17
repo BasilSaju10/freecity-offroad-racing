@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: freecity-offroad-racing
+    name: awd
     runtime: node
     plan: free
     region: singapore
