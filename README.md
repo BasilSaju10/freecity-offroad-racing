@@ -30,7 +30,7 @@ No external database or realtime service is required. Keep **one server instance
 
 ## Render
 
-Create a **Node web service** from this private repository, using the Free compute plan, a single instance, build `npm ci --omit=dev`, start `npm start`, health check `/healthz`. `render.yaml` records the same configuration. TLS connections automatically use WSS. Free services can sleep when idle, so the first load can take longer; in-memory sessions do not persist through sleep/restarts. Large car assets also take time to download on slower connections.
+Create a **Node web service** from this repository, using the Free compute plan, a single instance, build `npm ci --omit=dev`, start `npm start`, health check `/healthz`. `render.yaml` records the same configuration. TLS connections automatically use WSS. Free services can sleep when idle, so the first load can take longer; in-memory sessions do not persist through sleep/restarts. Large car assets also take time to download on slower connections.
 
 Editable Blender source files remain in the local project and are excluded from Git; runtime GLB models are committed.
 

@@ -19,14 +19,15 @@ export function attachMultiplayer(server,meta,{now=Date.now,autoTick=true,allowe
  function audience(p){return p.mode==='free'?[...players.values()].filter(q=>q.mode==='free'&&q.connected):p.room?members(rooms.get(p.room)||{members:[]}):[];}
  function broadcastRoom(r){for(const p of members(r))send(p.ws,{type:'room',room:roomState(r),serverTime:now()});}
  function error(p,message){send(p.ws,{type:'error',message});}
- function finishRace(r){if(r.phase==='results')return;r.phase='results';for(const [id,v] of r.race.progress)if(v.finishedAt==null){v.dnf=true;r.race.results.push({id,name:players.get(id)?.name||'Driver',time:null,dnf:true});}broadcastRoom(r);}
+ function finishRace(r){if(r.phase==='results')return;r.phase='results';for(const [id,v] of r.race.progress)if(v.finishedAt==null){v.dnf=true;if(!r.race.results.some(p=>p.id===id))r.race.results.push({id,name:players.get(id)?.name||'Driver',time:null,dnf:true});}broadcastRoom(r);}
  function detach(p){
   if(p.room){const r=rooms.get(p.room);if(r){r.members.delete(p.id);if(r.race?.progress.has(p.id)&&!r.race.progress.get(p.id).finishedAt){r.race.progress.get(p.id).dnf=true;if(!r.race.results.some(v=>v.id===p.id))r.race.results.push({id:p.id,name:p.name,time:null,dnf:true});}
    if(!r.members.size)rooms.delete(r.code);else{if(r.hostId===p.id)r.hostId=[...r.members][0];if(r.phase==='countdown'){r.phase='lobby';r.race=null;for(const q of members(r))q.ready=false;}if(r.phase==='racing'&&[...r.race.progress.values()].every(v=>v.finishedAt!=null||v.dnf))finishRace(r);broadcastRoom(r);}
   }}p.room=null;p.mode=null;p.ready=false;p.state=null;
  }
  function gridPose(index){const row=Math.floor(index/2),side=index%2?1:-1,[fx,fz]=course.forward;return{x:course.start.x-fx*(row*7+3)+fz*side*1.8,z:course.start.z-fz*(row*7+3)-fx*side*1.8,yaw:course.start.yaw};}
- function enterFree(p){const count=[...players.values()].filter(q=>q.mode==='free'&&q.id!==p.id).length;if(count>=32)return error(p,'The shared area is full (32 drivers). Try again shortly.');detach(p);p.mode='free';send(p.ws,{type:'joined',mode:'free',serverTime:now(),spawn:{...meta.spawn,x:meta.spawn.x+(count%4)*3,z:meta.spawn.z-Math.floor(count/4)*6}});}
+ function enterFree(p){const others=[...players.values()].filter(q=>q.mode==='free'&&q.id!==p.id);if(others.length>=32)return error(p,'The shared area is full (32 drivers). Try again shortly.');const used=new Set(others.map(q=>q.spawnSlot));let slot=0;while(used.has(slot))slot++;detach(p);p.spawnSlot=slot;p.mode='free';const [fx,fz]=course.forward,side=(slot%4-1.5)*3,back=Math.floor(slot/4)*6;send(p.ws,{type:'joined',mode:'free',serverTime:now(),spawn:{...meta.spawn,x:meta.spawn.x+fz*side-fx*back,z:meta.spawn.z-fx*side-fz*back}});}
+
  function handle(p,m){
   if(!m||typeof m!=='object'||typeof m.type!=='string')return;
   if(m.type==='ping')return send(p.ws,{type:'pong',sent:m.sent,serverTime:now()});
