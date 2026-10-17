@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "perimeterLengthMeters": 2950,
+  "connections": 5,
+  "matchingRouteCollision": true,
+  "oldBannersRemoved": true,
+  "all15CarsPreloaded": true,
+  "losslessTransport": true,
+  "shadowQualityUnchanged": true,
+  "drawDistanceMeters": 280,
+  "fogEndMeters": 240,
+  "frontAndRearLetterFacesRemoved": {
+    "front": 2232,
+    "back": 1392
+  }
+}

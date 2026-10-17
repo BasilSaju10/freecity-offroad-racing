@@ -6,7 +6,7 @@ export function createRemoteDrivers(pc,app,camera,profiles,createDriver){
  function collect(){for(const [id,shared] of assets)if(!shared.users.size&&!shared.loading){app.assets.remove(shared.asset);shared.asset.unload();assets.delete(id);}}
  async function upgrade(car){
   if(car.loading||car.model||Date.now()<(car.retryAt||0)||!profiles[car.vehicle])return;car.loading=true;const id=car.vehicle;let shared=assets.get(id);
-  if(!shared){const asset=new pc.Asset('Peer '+id,'container',{url:profiles[id].url+'?peer=1'});shared={asset,users:new Set(),loading:true};assets.set(id,shared);app.assets.add(asset);shared.promise=new Promise((resolve,reject)=>{asset.ready(()=>{shared.loading=false;resolve(asset);});asset.once('error',e=>{shared.loading=false;reject(e);});app.assets.load(asset);});}
+  if(!shared){const asset=new pc.Asset('Peer '+id,'container',{url:globalThis.offrideAssets?.url(profiles[id].url)||profiles[id].url});shared={asset,users:new Set(),loading:true};assets.set(id,shared);app.assets.add(asset);shared.promise=new Promise((resolve,reject)=>{asset.ready(()=>{shared.loading=false;resolve(asset);});asset.once('error',e=>{shared.loading=false;reject(e);});app.assets.load(asset);});}
   shared.users.add(car.id);car.assetId=id;
   try{await shared.promise;if(!cars.has(car.id)||car.vehicle!==id||!wanted.has(car.id)){shared.users.delete(car.id);car.loading=false;collect();return;}
    const model=shared.asset.resource.instantiateRenderEntity(),profile=profiles[id];model.setLocalScale(1.12,1.12,1.12);car.entity.addChild(model);car.model=model;

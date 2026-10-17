@@ -7,10 +7,10 @@
   "openingLogsDistanceIn8Seconds": 72.9,
   "openingLogsMaxSpeedKmh": 53.5,
   "openingLogsMinimumUprightDot": 0.95,
-  "physicsMsFor8SimulatedSeconds": 806,
+  "physicsMsFor8SimulatedSeconds": 1045,
   "fenceCollision": true,
   "treeAndRockCollisionRays": true,
   "broadphaseComparedToExhaustive": true,
-  "sceneryColliders": 625,
+  "sceneryColliders": 477,
   "waterCrossings": true
 }

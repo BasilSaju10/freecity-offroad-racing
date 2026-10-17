@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: awd
+    name: awd-offroad
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci --omit=dev
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
     numInstances: 1

@@ -20,9 +20,9 @@ app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW); app.setCanvasResolution(pc.RESOL
 app.graphicsDevice.maxPixelRatio = Math.min(devicePixelRatio, 1.7);
 window.addEventListener('resize', () => app.resizeCanvas());
 app.scene.ambientLight = new pc.Color(.28,.31,.36);
-app.scene.toneMapping = pc.TONEMAP_ACES;
+app.scene.toneMapping = pc.TONEMAP_ACES;app.scene.fog.type=pc.FOG_LINEAR;app.scene.fog.color=new pc.Color(.52,.72,.91);app.scene.fog.start=165;app.scene.fog.end=240;globalThis.offrideLoading?.stage(96,'Preparing lighting and terrain');
 const camera = new pc.Entity('Follow camera');
-camera.addComponent('camera', { clearColor: new pc.Color(.52,.72,.91), fov: 58, nearClip:.04, farClip:1600 }); app.root.addChild(camera);
+camera.addComponent('camera', { clearColor: new pc.Color(.52,.72,.91), fov: 58, nearClip:.04, farClip:280 }); app.root.addChild(camera);
 const sun = new pc.Entity('Afternoon sun'); sun.addComponent('light', { type:'directional', color:new pc.Color(1,.96,.89), intensity:1.7, castShadows:true, shadowDistance:90, shadowResolution:2048, shadowBias:.2, normalOffsetBias:.04 });
 sun.setEulerAngles(48,-35,0); app.root.addChild(sun);
 
@@ -151,10 +151,10 @@ app.on('update',dt=>{
   chassis.previousPosition.lerp(chassis.position,alpha,chassis.interpolatedPosition);
   chassis.previousQuaternion.slerp(chassis.quaternion,alpha,chassis.interpolatedQuaternion);
  }
- sync();driver.update(steering,view);updateCamera(dt);online?.update(dt,chassis.position);if(!paused){drivingSoil.update(activeModel,vehicle,chassis,tuning,dt,wheelState);if(modelReady){waterSplashes.update(activeVehicleId,vehicle,chassis,tuning,dt);const throttle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));exhaustSmoke.update(activeVehicleId,bodyVisual,chassis,vehicleScale,throttle,signedSpeed(),dt);}}
+ sync();driver.update(steering,view);updateCamera(dt);testingGround.updateVisibility?.(camera.getPosition(),dt);online?.update(dt,chassis.position);if(!paused){drivingSoil.update(activeModel,vehicle,chassis,tuning,dt,wheelState);if(modelReady){waterSplashes.update(activeVehicleId,vehicle,chassis,tuning,dt);const throttle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));exhaustSmoke.update(activeVehicleId,bodyVisual,chassis,vehicleScale,throttle,signedSpeed(),dt);}}
  $('speed').textContent=Math.round(Math.abs(signedSpeed())*3.6);
  if(activeModel?.soil)canvas.dataset.soil=JSON.stringify(activeModel.soil.groups.map(g=>({mud:+g.state.mud.toFixed(3),dust:+g.state.dust.toFixed(3)})));
- if(chassis.position.y< -30||Math.abs(chassis.position.x)>testingGround.meta.size/2-4||Math.abs(chassis.position.z)>testingGround.meta.size/2-4)reset();
+ if(chassis.position.y< -30||Math.abs(chassis.position.x)>testingGround.meta.size/2-4||Math.abs(chassis.position.z)>testingGround.meta.size/2-4){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));reset(nearestTrackPose([testingGround.meta.trail,...(testingGround.meta.routes||[]).map(r=>r.points)],chassis.position,forward)||spawnPoint);}
 });
 
 // Unbranded, live cabin instruments placed over the supplied display surfaces.
@@ -167,7 +167,7 @@ let displayTimer=0;
 app.on('update',dt=>{displayTimer+=dt;if(displayTimer<.1)return;displayTimer=0;const ctx=instrumentCanvas.getContext('2d');ctx.fillStyle='#09131f';ctx.fillRect(0,0,512,256);ctx.strokeStyle='#4bbfda';ctx.lineWidth=5;for(const x of [85,427]){ctx.beginPath();ctx.arc(x,136,63,.8,5.5);ctx.stroke();}ctx.textAlign='center';ctx.fillStyle='#f2f8ff';ctx.font='bold 88px sans-serif';ctx.fillText(Math.round(Math.abs(signedSpeed())*3.6),256,150);ctx.font='19px sans-serif';ctx.fillStyle='#80b6ce';ctx.fillText('km/h',256,183);ctx.font='16px sans-serif';ctx.fillText(tuning.rearDrive?'RWD':'AWD',85,145);ctx.fillText('DRIVE',427,145);instruments.setSource(instrumentCanvas);});
 
 function isCabinGlass(name){return /cabin_glass|windscreen|window|defrost|clear automotive glass|^glass_y/i.test(name)||(/glass|transl/i.test(name)&&!/headlight|taillight|lamp|red_glass|orange_glass|fari|zad/i.test(name));}
-function loadContainer(url,filename){return new Promise((resolve,reject)=>app.assets.loadFromUrlAndFilename(url,filename||url,'container',(err,asset)=>err?reject(Error(String(err))):resolve(asset)));}
+function loadContainer(url,filename){return new Promise((resolve,reject)=>app.assets.loadFromUrlAndFilename(globalThis.offrideAssets?.url(url)||url,filename||url,'container',(err,asset)=>err?reject(Error(String(err))):resolve(asset)));}
 const vehicleProfiles={"suv": {"url": "./assets/vehicle.glb", "mass": 2500, "wheelbase": 2.856924, "track": 1.655536, "radius": 0.39975, "restLength": 0.36, "stiffness": 32, "compression": 4.8, "rebound": 4.2, "travel": 0.2, "engineForce": 3300, "brake": 42, "rideHeight": 0.54165, "rearDrive": false, "eye": [-0.43, 0.9, 0.25], "steeringPosition": [-0.4365, 0.70835, -0.34759], "collider": [0.94, 0.55, 2.25], "colliderOffset": [0, 0.39, 0], "display": [-0.436, 0.745, -0.53]}};
 // All vehicles share the SUV's driving tune, with model-specific wheel stations and hulls.
 vehicleProfiles.suv.label='SUV';
@@ -232,8 +232,8 @@ function applyVehicleProfile(profile,preservePosition=false){
   for(const state of wheelState)state.previousLength=state.length=tuning.restLength;
  }else reset();
 }
-async function loadCar(id='range-rover'){
- if(networkLock.vehicle&&id!==activeVehicleId)return;
+async function loadCar(id='range-rover',authoritative=false){
+ if(networkLock.vehicle&&id!==activeVehicleId&&!authoritative)return;
  if(carLoading)return;carLoading=true;picker.update(activeVehicleId,true,id);$('vehicle-toggle').disabled=true;$('vehicle-toggle').textContent='Loading vehicleâ€¦';$('status').textContent='Loading vehicle...';
  try{
   const profile=vehicleProfiles[id];let entry=modelCache.get(id);
@@ -271,7 +271,7 @@ async function loadCar(id='range-rover'){
 
 window.playground={app,world,vehicle,chassis,tuning,reset,get modelReady(){return modelReady;},map:testingGround};
 addEventListener('error',e=>{$('error').hidden=false;$('error').textContent='The playground could not start.\n'+e.message;});
-selectCamera(2);app.start();loadCar(activeVehicleId);
+globalThis.offrideLoading?.stage(98,'Preparing your vehicle');selectCamera(2);app.start();await loadCar(activeVehicleId);if(!modelReady)throw Error('Could not prepare the selected vehicle');
 const remoteDrivers=createRemoteDrivers(pc,app,camera,vehicleProfiles,createHelmetDriver);
 const checkpoint=new pc.Entity('Next race checkpoint');app.root.addChild(checkpoint);checkpoint.enabled=false;
 const checkpointMaterial=material('Race checkpoint',[.12,.65,.48]);checkpointMaterial.emissive=new pc.Color(.08,.4,.22);checkpointMaterial.update();
@@ -280,6 +280,7 @@ const beam=new pc.Entity('Checkpoint beam');beam.addComponent('render',{type:'bo
 online=createMultiplayer({
  getVehicle:()=>activeVehicleId,isReady:()=>modelReady&&!carLoading,
  getState:()=>({p:[chassis.position.x,chassis.position.y,chassis.position.z],q:[chassis.quaternion.x,chassis.quaternion.y,chassis.quaternion.z,chassis.quaternion.w],w:wheelState.map(w=>[Math.max(0,w.length),w.spin,w.steer]),steer:steering,speed:signedSpeed()}),
+ onRestore:async state=>{if(!state?.p||!state?.q)return;if(networkLock.vehicle&&vehicleProfiles[state.vehicle]&&state.vehicle!==activeVehicleId)await loadCar(state.vehicle,true);chassis.position.set(...state.p);chassis.quaternion.set(...state.q);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.previousPosition.copy(chassis.position);chassis.interpolatedPosition.copy(chassis.position);chassis.previousQuaternion.copy(chassis.quaternion);chassis.interpolatedQuaternion.copy(chassis.quaternion);chassis.aabbNeedsUpdate=true;chassis.wakeUp();camPos.set(chassis.position.x+5,chassis.position.y+4.5,chassis.position.z+10);},
  onGrid:pose=>{keys.clear();if(modelReady)reset(pose);else pendingNetworkPose=pose;},
  onLock:state=>{Object.assign(networkLock,state);$('more-vehicles').disabled=state.vehicle||carLoading;$('reset-track').disabled=state.race;},
  onMenu:open=>{keys.clear();paused=open||$('vehicle-picker').open;if(open){softMouseLook=false;canvas.style.cursor='grab';}},
@@ -287,3 +288,5 @@ online=createMultiplayer({
  showCheckpoint:gate=>{checkpoint.enabled=!!gate?.point;if(gate?.point){const p=gate.point;checkpoint.setPosition(p[0],testingGround.heightAt(p[0],p[2])+.03,p[2]);if(gate.next)checkpoint.setEulerAngles(0,Math.atan2(gate.next[0]-p[0],gate.next[2]-p[2])*180/Math.PI,0);}}
 });
 
+
+globalThis.offrideLoading?.stage(99,'Compiling the first frame');app.once('postrender',()=>globalThis.offrideLoading?.complete());

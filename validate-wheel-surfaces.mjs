@@ -12,7 +12,8 @@ for(const [id,profile] of Object.entries(profiles)){
  for(const [i,m] of j.materials.entries())if(/tyre|tire|rubber|borracha|rowerwheel/i.test(m.name))indices.add(i);
  for(const i of indices){const m=j.materials[i];assert.equal(m.alphaMode||'OPAQUE','OPAQUE',id+' solid '+m.name);assert.equal((m.pbrMetallicRoughness?.baseColorFactor||[1,1,1,1])[3],1,id+' full opacity');assert.equal(m.doubleSided,true,id+' no backface holes');materials++;}
  for(const m of j.materials)if(/cabin_glass|windscreen|window/i.test(m.name)&&m.alphaMode==='BLEND')windows++;
- const recorded=audit.vehicles.find(v=>v.id===id);assert(recorded);assert.equal(createHash('sha256').update(b.subarray(20+length)).digest('hex'),recorded.binarySha256,id+' original geometry, rim openings and textures retained');
+ let retained=b.subarray(20+length);if(id==='raptor'){const fix=JSON.parse(readFileSync('assets/raptor-grille-correction.json'));retained=Buffer.from(retained.subarray(0,fix.originalBinaryWithHeaderBytes));retained.writeUInt32LE(retained.length-8,0);}
+ const recorded=audit.vehicles.find(v=>v.id===id);assert(recorded);assert.equal(createHash('sha256').update(retained).digest('hex'),recorded.binarySha256,id+' original geometry, rim openings and textures retained');
 }
 assert.equal(assemblies,Object.keys(profiles).length*4);assert(windows>0,'real window transparency preserved');
 const pc={BLEND_NONE:0,CULLFACE_NONE:0},texture={},make=name=>({name,blendType:2,opacity:.3,opacityMap:texture,diffuseMap:texture,depthWrite:false,cull:1,refraction:.5,update(){this.updated=true;}});

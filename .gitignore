@@ -5,3 +5,7 @@ node_modules/
 .env
 .env.*
 *.zip
+
+app.bundle.js
+asset-manifest.json
+.compressed/

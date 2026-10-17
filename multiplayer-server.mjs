@@ -15,7 +15,8 @@ export function makeCourse(meta,random=Math.random){
  return {name:`Mountain sprint ${Math.round(offset)}${reverse?' reverse':''}`,checkpoints:path.slice(1),radius:15,start:{x:a[0],y:a[1],z:a[2],yaw:Math.atan2(-fx,-fz)},forward:[fx/n,fz/n]};
 }
 export function attachMultiplayer(server,meta,{now=Date.now,autoTick=true,allowedOrigins=[],random=Math.random}={}){
- const wss=new WebSocketServer({noServer:true,maxPayload:4096,perMessageDeflate:false}),players=new Map(),rooms=new Map(),sockets=new Map(),course={start:meta.spawn,forward:[-Math.sin(meta.spawn.yaw),-Math.cos(meta.spawn.yaw)]};let closing=false;
+ const wss=new WebSocketServer({noServer:true,maxPayload:4096,perMessageDeflate:false}),players=new Map(),rooms=new Map(),sockets=new Map(),course={start:meta.spawn,forward:[-Math.sin(meta.spawn.yaw),-Math.cos(meta.spawn.yaw)]};let closing=false,lastDirectory=0;const invitations=new Map();
+ const validPose=s=>s&&Array.isArray(s.p)&&s.p.length===3&&s.p.every(Number.isFinite)&&Math.abs(s.p[0])<456&&Math.abs(s.p[2])<456&&Math.abs(s.p[1])<300&&Array.isArray(s.q)&&s.q.length===4&&s.q.every(Number.isFinite)&&Math.abs(Math.hypot(...s.q)-1)<.05;
  const publicPlayer=p=>({id:p.id,name:p.name,vehicle:p.vehicle,ready:p.ready,connected:p.connected});
  function send(ws,message){if(ws?.readyState===WebSocket.OPEN&&ws.bufferedAmount<128*1024)ws.send(JSON.stringify(message));}
  const members=r=>[...r.members].map(id=>players.get(id)).filter(Boolean);
@@ -31,12 +32,15 @@ export function attachMultiplayer(server,meta,{now=Date.now,autoTick=true,allowe
  }
  function gridPose(index,courseOverride=course){const course=courseOverride;const row=Math.floor(index/2),side=index%2?1:-1,[fx,fz]=course.forward;return{y:course.start.y,x:course.start.x-fx*(row*7+3)+fz*side*1.8,z:course.start.z-fz*(row*7+3)-fx*side*1.8,yaw:course.start.yaw};}
  function place(p,pose){p.state={p:[pose.x,(pose.y??meta.spawn.y)+.8,pose.z],q:[0,Math.sin(pose.yaw/2),0,Math.cos(pose.yaw/2)],w:Array.from({length:4},()=>[.36,0,0]),steer:0,speed:0,vehicle:p.vehicle};p.lastStateAt=0;}
- function enterFree(p){const others=[...players.values()].filter(q=>q.mode==='free'&&q.id!==p.id);if(others.length>=32)return error(p,'The shared area is full (32 drivers). Try again shortly.');const used=new Set(others.map(q=>q.spawnSlot));let slot=0;while(used.has(slot))slot++;detach(p);p.spawnSlot=slot;p.mode='free';const [fx,fz]=course.forward,side=(slot%4-1.5)*3,back=Math.floor(slot/4)*6;const spawn={...meta.spawn,x:meta.spawn.x+fz*side-fx*back,z:meta.spawn.z-fx*side-fz*back};place(p,spawn);send(p.ws,{type:'joined',mode:'free',serverTime:now(),spawn});}
+ const directory=()=>[...players.values()].filter(p=>p.connected&&p.mode).map(p=>({...publicPlayer(p),available:p.mode==='free'}));
+ function enterFree(p,resume=null){const saved=p.mode==='free'?p.state:validPose(resume)?{p:resume.p,q:resume.q,w:Array.from({length:4},()=>[.36,0,0]),steer:0,speed:0,vehicle:p.vehicle}:null;const others=[...players.values()].filter(q=>q.mode==='free'&&q.id!==p.id);if(others.length>=32)return error(p,'The shared area is full (32 drivers). Try again shortly.');const used=new Set(others.map(q=>q.spawnSlot));let slot=0;while(used.has(slot))slot++;detach(p);p.spawnSlot=slot;p.mode='free';const [fx,fz]=course.forward,side=(slot%4-1.5)*3,back=Math.floor(slot/4)*6;const spawn={...meta.spawn,x:meta.spawn.x+fz*side-fx*back,z:meta.spawn.z-fx*side-fz*back};if(saved)p.state=saved;else place(p,spawn);send(p.ws,{type:'joined',mode:'free',serverTime:now(),...(saved?{restore:saved}:{spawn})});}
 
  function handle(p,m){
+  p.lastSeen=now();
   if(!m||typeof m!=='object'||typeof m.type!=='string')return;
+  if(m.type==='listOnline')return send(p.ws,{type:'directory',players:directory()});
   if(m.type==='ping')return send(p.ws,{type:'pong',sent:m.sent,serverTime:now()});
-  if(m.type==='joinFree'){p.name=safeName(m.name);if(vehicleIds.includes(m.vehicle))p.vehicle=m.vehicle;return enterFree(p);}
+  if(m.type==='joinFree'){p.name=safeName(m.name);if(vehicleIds.includes(m.vehicle))p.vehicle=m.vehicle;return enterFree(p,m.resume);}
   if(m.type==='createRoom'){
    if(rooms.size>=100)return error(p,'All race rooms are busy. Try again shortly.');detach(p);p.name=safeName(m.name);if(vehicleIds.includes(m.vehicle))p.vehicle=m.vehicle;
    let code;do{code=randomBytes(3).toString('hex').toUpperCase();}while(rooms.has(code));const r={code,hostId:p.id,phase:'lobby',members:new Set([p.id]),race:null};rooms.set(code,r);p.mode='room';p.room=code;place(p,gridPose(0));send(p.ws,{type:'joined',mode:'room',code,spawn:gridPose(0),serverTime:now()});broadcastRoom(r);return;
@@ -47,6 +51,19 @@ export function attachMultiplayer(server,meta,{now=Date.now,autoTick=true,allowe
   }
   if(m.type==='leave'){detach(p);send(p.ws,{type:'left'});return;}
   const r=rooms.get(p.room);
+  if(m.type==='invite'){
+   if(!r||r.hostId!==p.id||r.phase!=='lobby')return error(p,'Only a lobby host can invite players.');
+   const target=players.get(m.playerId);if(!target?.connected||target.mode!=='free'||target.id===p.id)return error(p,'That driver is not available.');
+   if(r.members.size>=5)return error(p,'This room is full.');
+   if([...invitations.values()].some(i=>i.to===target.id&&i.room===r.code&&i.expires>now()))return error(p,'An invitation is already pending.');
+   const invite={id:randomUUID(),room:r.code,from:p.id,to:target.id,expires:now()+30000};invitations.set(invite.id,invite);send(target.ws,{type:'invitation',invitation:{id:invite.id,host:p.name,code:r.code,expires:invite.expires}});send(p.ws,{type:'notice',message:'Invitation sent to '+target.name+'.'});return;
+  }
+  if(m.type==='answerInvite'){
+   const invite=invitations.get(m.inviteId);if(!invite||invite.to!==p.id||invite.expires<now())return error(p,'This invitation has expired.');invitations.delete(invite.id);
+   if(!m.accept)return;const targetRoom=rooms.get(invite.room);if(!targetRoom||targetRoom.hostId!==invite.from)return error(p,'This room is no longer available.');
+   if(p.mode==='room'&&['countdown','racing'].includes(r?.phase))return error(p,'Finish your current race first.');
+   return handle(p,{type:'joinRoom',code:invite.room,name:p.name,vehicle:p.vehicle});
+  }
   if(m.type==='ready'){if(!r||r.phase!=='lobby')return;p.ready=!!m.ready;broadcastRoom(r);return;}
   if(m.type==='startRace'){
    if(!r||r.hostId!==p.id)return error(p,'Only the host can launch the race.');if(r.phase!=='lobby')return error(p,'The race is already running.');const list=members(r);if(list.length<2||!list.every(v=>v.connected&&v.ready))return error(p,'At least two connected drivers must be ready.');
@@ -85,14 +102,14 @@ export function attachMultiplayer(server,meta,{now=Date.now,autoTick=true,allowe
   const helloTimeout=setTimeout(()=>{if(!player)ws.close(1008,'Join timed out');},10000);helloTimeout.unref?.();
   ws.on('message',raw=>{try{
    if(now()-lastWindow>1000){lastWindow=now();messages=0;}if(++messages>65)return ws.close(1008,'Too many messages');const m=JSON.parse(raw.toString());
-   if(!player){if(m.type!=='hello')return;clearTimeout(helloTimeout);const existing=[...players.values()].find(p=>p.token===m.token&&typeof m.token==='string'&&!p.connected&&now()-p.disconnectedAt<20000);
-    if(existing){player=existing;player.ws=ws;player.connected=true;player.seq=-1;}else{player={id:randomUUID(),token:randomBytes(24).toString('hex'),name:'Driver',vehicle:'suv',mode:null,room:null,ready:false,connected:true,state:null,lastStateAt:0,seq:-1,ws};players.set(player.id,player);}sockets.set(ws,player);send(ws,{type:'welcome',id:player.id,token:player.token,mode:player.mode,room:player.room?roomState(rooms.get(player.room)):null,serverTime:now()});if(player.room)broadcastRoom(rooms.get(player.room));return;
-   }handle(player,m);
+   if(!player){if(m.type!=='hello')return;if(m.version!==2){ws.close(4002,'Refresh OFFRIDE to update multiplayer');return;}clearTimeout(helloTimeout);const existing=[...players.values()].find(p=>p.token===m.token&&typeof m.token==='string'&&(p.connected||now()-p.disconnectedAt<20000));
+    if(existing){player=existing;if(player.connected&&player.ws!==ws)player.ws.close(4001,'Driving continued in another tab');player.ws=ws;player.connected=true;player.lastSeen=now();player.seq=-1;}else{player={id:randomUUID(),token:typeof m.token==='string'&&/^[a-f0-9-]{36,96}$/i.test(m.token)?m.token:randomBytes(24).toString('hex'),name:'Driver',vehicle:'suv',mode:null,room:null,ready:false,connected:true,lastSeen:now(),state:null,lastStateAt:0,seq:-1,ws};players.set(player.id,player);}sockets.set(ws,player);send(ws,{type:'welcome',id:player.id,token:player.token,mode:player.mode,room:player.room?roomState(rooms.get(player.room)):null,restore:player.mode?player.state:null,serverTime:now()});if(player.room)broadcastRoom(rooms.get(player.room));return;
+   }if(player.ws!==ws||!player.connected)return;handle(player,m);
   }catch{send(ws,{type:'error',message:'Invalid network message.'});}});
-  ws.on('error',()=>{});ws.on('close',()=>{clearTimeout(helloTimeout);sockets.delete(ws);if(player){player.connected=false;player.disconnectedAt=now();if(player.room)broadcastRoom(rooms.get(player.room));}});
+  ws.on('error',()=>{});ws.on('close',()=>{clearTimeout(helloTimeout);sockets.delete(ws);if(player&&player.ws===ws){player.connected=false;player.disconnectedAt=now();if(player.room)broadcastRoom(rooms.get(player.room));}});
  });
  function tick(){
-  const time=now();for(const p of players.values())if(!p.connected&&time-p.disconnectedAt>=20000){detach(p);players.delete(p.id);}
+  const time=now();for(const p of players.values())if(p.connected&&time-p.lastSeen>30000){p.connected=false;p.disconnectedAt=time;p.ws.close(4003,'Driver stopped updating');if(p.room)broadcastRoom(rooms.get(p.room));}for(const [id,i] of invitations)if(i.expires<time)invitations.delete(id);if(time-lastDirectory>=1000){lastDirectory=time;const list=directory();for(const p of players.values())if(p.connected)send(p.ws,{type:'directory',players:list});}for(const p of players.values())if(!p.connected&&time-p.disconnectedAt>=20000){detach(p);players.delete(p.id);}
   for(const r of rooms.values()){if(r.phase==='countdown'&&time>=r.race.startAt){r.phase='racing';broadcastRoom(r);}if(r.phase==='racing'&&time>=r.race.deadline)finishRace(r);}
   for(const p of players.values())if(p.connected&&p.mode){const peers=audience(p).filter(q=>q.id!==p.id).map(q=>({...publicPlayer(q),state:q.connected?q.state:null}));send(p.ws,{type:'snapshot',players:peers,serverTime:time});}
  }

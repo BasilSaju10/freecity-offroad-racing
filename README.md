@@ -10,6 +10,7 @@ Install Node.js 22 or newer, then run:
 
 ```sh
 npm ci
+npm run build
 npm start
 ```
 
@@ -26,7 +27,7 @@ Driving controls: WASD/arrows, Space handbrake, Space + W for a low-speed burnou
 
 ## Network model
 
-One Node server serves the game and the `/multiplayer` WebSocket endpoint. Clients send bounded 20 Hz vehicle snapshots independently of rendering. Idle drivers have a server-seeded pose immediately; invalid cosmetic wheel values cannot discard a valid car pose. Other cars interpolate position and rotation, with animated wheels, steering and helmeted drivers. The four nearest cars within 160 m use full vehicle models; farther drivers use lightweight silhouettes. Player cars are non-colliding ghosts to avoid latency-induced impacts; map collisions remain local to each browser. Physics is client-simulated, with server-side packet bounds, ordering and checkpoint validation. This is casual multiplayer, not a competitive anti-cheat system.
+One Node server serves the game and the `/multiplayer` WebSocket endpoint. One persistent browser identity owns one active connection. Opening another tab takes over the same car; the old tab stops publishing. Reconnects restore position instead of spawning a second car. Clients send bounded 20 Hz vehicle snapshots independently of rendering. Idle drivers have a server-seeded pose immediately; invalid cosmetic wheel values cannot discard a valid car pose. Other cars interpolate position and rotation, with animated wheels, steering and helmeted drivers. The four nearest cars within 160 m use full vehicle models; farther drivers use lightweight silhouettes. Player cars are non-colliding ghosts to avoid latency-induced impacts; map collisions remain local to each browser. Physics is client-simulated, with server-side packet bounds, ordering and checkpoint validation. This is casual multiplayer, not a competitive anti-cheat system.
 
 No external database or realtime service is required. Keep **one server instance** unless a shared multiplayer backend is added. The service uses `PORT` and binds `0.0.0.0`. It sends heartbeat pings, retries client connections, automatically rejoins free roam after a server restart, and closes connections on shutdown.
 
@@ -41,3 +42,13 @@ Editable Blender source files remain in the local project and are excluded from 
 `npm test` runs the existing vehicle/map checks and the multiplayer integration suite. `node validate-multiplayer.mjs` independently tests shared free roam, private-room isolation, the five-player limit, host-only ready starts, ordered checkpoints, results, rematches, reconnects and host transfer using real WebSocket clients.
 
 Vehicle/model editing details, supplied asset information and original rights notices are preserved in [VEHICLE-NOTES.md](VEHICLE-NOTES.md).
+
+## This release
+
+- The player-count button opens the current online driver list. Lobby hosts can invite free-roam drivers; invitations expire after 30 seconds and offer Accept and Reject.
+- A genuine byte-counted loader downloads the world, engine bundle and all 15 car GLBs before play. Hashed URLs and a persistent service-worker cache reuse unchanged car files on future visits and releases. Only three full local car models remain resident at once.
+- The engine is bundled into one 3.4 MB module, and all heavy transfers use lossless gzip. The build report records the actual byte totals. The car on the loading screen follows that measured progress; 100% waits for initialization and the first rendered frame.
+- The 2.95 km perimeter trail has five links to the existing route network, with matching terrain/colliders. Fixed START/FINISH arches and their colliders are removed.
+- Spatial render chunks are hidden beyond 265 m behind fog that becomes opaque at 240 m; camera clipping is 280 m. Shadow resolution/distance, reflections, mud, dust, smoke, water and vehicle physics retain their existing settings.
+
+Run `npm run build` after editing source/assets. `npm start` builds automatically only if the generated manifest or bundle is missing. Render's build command is `npm ci --include=dev && npm run build`; start command is `npm start`. Generated bundles and compressed transfers are build outputs, not source-control assets.

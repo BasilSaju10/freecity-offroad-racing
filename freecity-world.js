@@ -18,7 +18,6 @@ export function createMapPhysics(C,world,meta,buffer) {
     }
     // Match the actual scaled scenery geometry, rather than oversized spheres.
     for(const o of meta.scenery){const shape=o.kind==='tree'?new C.Cylinder(o.top,o.bottom,o.height,7):new C.ConvexPolyhedron({vertices:o.vertices.map(v=>new C.Vec3(...v)),faces:o.faces});const body=new C.Body({mass:0,shape});body.position.set(...o.position);body.aabbNeedsUpdate=true;body.mapKind=o.kind;world.addBody(body);}
-    for(const p of [meta.startBanner,meta.finishBanner]){const body=new C.Body({mass:0});body.position.set(p.x,p.y,p.z);for(const side of [-1,1])body.addShape(new C.Box(new C.Vec3(.2*horizontalScale,2.25,.2*horizontalScale)),new C.Vec3(side*6*horizontalScale,2,0));body.addShape(new C.Box(new C.Vec3(6.2*horizontalScale,.65,.19*horizontalScale)),new C.Vec3(0,4.4,0));body.mapKind='arch';world.addBody(body);}
     function heightAt(x,z){const u=Math.max(0,Math.min(n-1.00001,(x-meta.minX)/step)),v=Math.max(0,Math.min(n-1.00001,(meta.maxZ-z)/step));const i=Math.floor(u),j=Math.floor(v),tx=u-i,tz=v-j;const a=heights[i][j],b=heights[i+1][j],c=heights[i][j+1],d=heights[i+1][j+1];return tx+tz<=1?a+(b-a)*tx+(c-a)*tz:d+(c-d)*(1-tx)+(b-d)*(1-tz);}
     const rockRoutes=(meta.routes||[]).filter(r=>r.kind==='rock');
     function inRockRoute(x,z){for(const r of rockRoutes)for(let i=0;i<r.points.length-1;i++){const a=r.points[i],b=r.points[i+1],dx=b.x-a.x,dz=b.z-a.z,den=dx*dx+dz*dz;if(den<1e-8)continue;const t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/den));if((x-a.x-t*dx)**2+(z-a.z-t*dz)**2<(r.width*.5)**2)return true;}return false;}
@@ -29,15 +28,16 @@ export function createMapPhysics(C,world,meta,buffer) {
     return {meta,ground,fenceMaterial,heightAt,surfaceAt,surfaceInfo,applyWheelSurface};
 }
 export async function loadFreeCity(pc,C,app,world){
-    const responses=await Promise.all([fetch('./assets/map/physics.json'),fetch('./assets/map/heights.bin')]);
+    const assetUrl=path=>globalThis.offrideAssets?.url(path)||path;const responses=await Promise.all([fetch(assetUrl('./assets/map/physics.json')),fetch(assetUrl('./assets/map/heights.bin'))]);
     if(responses.some(r=>!r.ok))throw Error('Could not load map collision data');
     const [meta,buffer]=await Promise.all([responses[0].json(),responses[1].arrayBuffer()]);
     const result=createMapPhysics(C,world,meta,buffer);
-    const asset=await new Promise((resolve,reject)=>app.assets.loadFromUrl('./assets/map/freecity.glb','container',(err,a)=>err?reject(Error(String(err))):resolve(a)));
+    const asset=await new Promise((resolve,reject)=>app.assets.loadFromUrlAndFilename(assetUrl('./assets/map/freecity.glb'),'freecity.glb','container',(err,a)=>err?reject(Error(String(err))):resolve(a)));
     const model=asset.resource.instantiateRenderEntity();model.name='FreeCity offroad map';app.root.addChild(model);
     for(const a of asset.resource.materials){const m=a.resource;m.useDynamicRefraction=false;m.refraction=0;m.update();}
-    // The supplied model omits the generator's text textures; restore only route labels.
-    function banner(text,point){const canvas=document.createElement('canvas');canvas.width=512;canvas.height=96;const ctx=canvas.getContext('2d');ctx.fillStyle='#705634';ctx.fillRect(0,0,512,96);ctx.fillStyle='#fff3ce';ctx.textAlign='center';ctx.font='bold 62px sans-serif';ctx.fillText(text,256,71);const texture=new pc.Texture(app.graphicsDevice,{mipmaps:true});texture.setSource(canvas);const material=new pc.StandardMaterial();material.diffuseMap=texture;material.emissiveMap=texture;material.emissive=new pc.Color(.5,.5,.5);material.cull=pc.CULLFACE_NONE;material.update();const e=new pc.Entity(text);e.addComponent('render',{type:'plane',castShadows:false});e.render.material=material;e.setLocalScale(9*(meta.horizontalScale||1),1,1.1);e.setEulerAngles(-90,0,0);e.setPosition(point.x,point.y+4.4,point.z-.22*(meta.horizontalScale||1));app.root.addChild(e);}
-    banner('START',meta.startBanner);banner('FINISH',meta.finishBanner);
-    return result;
+    // Geometry is split into spatial chunks at build time. Nearby geometry and shadows
+    // are unchanged; distant chunks leave the draw list behind the fog curtain.
+    const chunks=model.findComponents('render').map(render=>{let minX=Infinity,minZ=Infinity,maxX=-Infinity,maxZ=-Infinity;for(const mi of render.meshInstances){const b=mi.aabb,c=b.center,h=b.halfExtents;minX=Math.min(minX,c.x-h.x);maxX=Math.max(maxX,c.x+h.x);minZ=Math.min(minZ,c.z-h.z);maxZ=Math.max(maxZ,c.z+h.z);}return{render,minX,maxX,minZ,maxZ};});
+    let visibilityClock=1;result.updateVisibility=(position,dt)=>{visibilityClock+=dt;if(visibilityClock<.2)return;visibilityClock=0;for(const c of chunks){const dx=Math.max(c.minX-position.x,0,position.x-c.maxX),dz=Math.max(c.minZ-position.z,0,position.z-c.maxZ);c.render.enabled=dx*dx+dz*dz<265*265;}};
+    globalThis.offrideLoading?.stage(97,'World and collision surfaces ready');return result;
 }

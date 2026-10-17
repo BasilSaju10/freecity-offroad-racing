@@ -5,6 +5,7 @@
       "width": 14,
       "kind": "dirt",
       "added": true,
+      "perimeter": false,
       "points": [
         {
           "x": -190,
@@ -128,6 +129,7 @@
       "width": 14,
       "kind": "dirt",
       "added": true,
+      "perimeter": false,
       "points": [
         {
           "x": -190,
@@ -186,6 +188,7 @@
       "width": 16,
       "kind": "rock",
       "added": true,
+      "perimeter": false,
       "points": [
         {
           "x": -190,
@@ -369,6 +372,7 @@
       "width": 16,
       "kind": "rock",
       "added": true,
+      "perimeter": false,
       "points": [
         {
           "x": -40,
