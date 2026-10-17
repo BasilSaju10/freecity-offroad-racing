@@ -1,6 +1,6 @@
 # OFFRIDE
 
-Play online: https://awd-2upb.onrender.com/
+Play online: https://awd-offroad.onrender.com/
 
 Offroad driving with 15 selectable vehicles, shared free roam and private races for up to five drivers.
 

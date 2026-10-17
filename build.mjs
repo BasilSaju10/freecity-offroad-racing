@@ -2,7 +2,7 @@ import {build} from 'esbuild';
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
-await build({entryPoints:['main.js'],outfile:'app.bundle.js',bundle:true,format:'esm',target:'es2022',minify:true,legalComments:'none'});
+await build({entryPoints:['main.js'],outfile:'app.bundle.js',bundle:true,format:'esm',target:'es2022',minify:true,legalComments:'none',alias:{fflate:'./vendor/fflate.js'}});
 const names=['app.bundle.js','assets/map/physics.json','assets/map/heights.bin','assets/map/freecity.glb',...['vehicle','range-rover','defender-90','defender-grasmere','ram-trx','fortuner','gladiator','sierra','g63','raptor','everest','safari','hilux','urus','sterrato'].map(n=>'assets/'+n+'.glb')];
 const files=[];await mkdir('.compressed',{recursive:true});let raw=0,compressed=0;
 for(const path of names){const bytes=await readFile(path),hash=createHash('sha256').update(bytes).digest('hex').slice(0,16),packed=gzipSync(bytes,{level:6});await writeFile('.compressed/'+hash+'.gz',packed);files.push({path,url:'./'+path+'?v='+hash,bytes:bytes.length,hash});raw+=bytes.length;compressed+=packed.length;}
