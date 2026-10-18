@@ -1,4 +1,10 @@
+import {createDriveSoundSequence} from './drive-sound-sequence.js';
+import {createWeather} from './weather.js';
+import {createWindshieldWipers} from './windshield-wipers.js';
+import {lampProfiles} from './vehicle-lights.js';
 import {createMultiplayer} from './multiplayer-client.js';
+import {createVehicleAudio} from './vehicle-audio.js';
+import {createVehicleLights} from './vehicle-lights.js';
 import {createRemoteDrivers} from './remote-drivers.js';
 import {nearestTrackPose} from './track-reset.js';
 import {createWaterSplashes} from './water-splashes.js';
@@ -54,6 +60,7 @@ world.addBody(chassis);vehicle.world=world;
 const networkLock={freeze:false,race:false,vehicle:false};let online=null,pendingNetworkPose=null;
 const bodyVisual=new pc.Entity('Vehicle body');app.root.addChild(bodyVisual);
 const driver=createHelmetDriver(pc,app,bodyVisual);
+const suppliedHands=await loadContainer('./assets/hands-on-wheel.glb');for(const a of suppliedHands.resource.materials){const m=a.resource;m.diffuseVertexColor=true;m.diffuse.set(1,1,1);m.update();}driver.attachHands(suppliedHands.resource.instantiateRenderEntity());
 const drivingSoil=createDrivingSoil(pc,app,testingGround,camera);
 const waterSplashes=createWaterSplashes(pc,app,testingGround,camera);
 const exhaustSmoke=createExhaustSmoke(pc,app,testingGround,camera,exhaustOutlets);
@@ -63,14 +70,22 @@ let loadedWheels=null,loadedBrakes=null,steeringVisual=null,modelReady=false;
 const wheelState=vehicle.wheelInfos.map(()=>({previousLength:tuning.restLength,length:tuning.restLength,previousSpin:0,spin:0,previousSteer:0,steer:0}));
 let spawnPoint=testingGround.meta.spawn;
 const keys=new Set();let steering=0,view=0,paused=false;let cameraYaw=0,cameraPitch=.30,cameraDistance=10;const canvas=$('canvas');let softMouseLook=false;const camPos=new pc.Vec3(9,6,13),target=new pc.Vec3(),offset=new pc.Vec3();
-function reset(pose=spawnPoint){waterSplashes.reset();exhaustSmoke.reset();chassis.position.set(pose.x,testingGround.heightAt(pose.x,pose.z)+tuning.rideHeight+.15,pose.z);chassis.quaternion.setFromAxisAngle(new C.Vec3(0,1,0),pose.yaw);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.force.setZero();chassis.torque.setZero();chassis.wakeUp();steering=0;cameraYaw=0;cameraPitch=view===2?.10:.30;for(const state of wheelState){state.previousSteer=state.steer=0;state.previousSpin=state.spin=0;state.previousLength=state.length=tuning.restLength;}chassis.previousPosition.copy(chassis.position);chassis.interpolatedPosition.copy(chassis.position);chassis.previousQuaternion.copy(chassis.quaternion);chassis.interpolatedQuaternion.copy(chassis.quaternion);chassis.aabbNeedsUpdate=true;for(let i=0;i<4;i++){vehicle.setSteeringValue(0,i);vehicle.setBrake(0,i);vehicle.applyEngineForce(0,i);}const back=chassis.quaternion.vmult(new C.Vec3(5,4.5,10));camPos.set(chassis.position.x+back.x,chassis.position.y+back.y,chassis.position.z+back.z);}
+const vehicleAudio=createVehicleAudio(),vehicleLights=createVehicleLights(pc),driveGearSequence=createDriveSoundSequence();let headlights=false;
+const weather=createWeather(pc,app,camera,sun,testingGround,()=>vehicleAudio.thunder());
+const wipers=createWindshieldWipers(pc,bodyVisual);
+const headlightBeams=[-1,1].map(side=>{const e=new pc.Entity('Headlight road beam');e.addComponent('light',{type:'spot',color:new pc.Color(.86,.92,1),intensity:5,range:42,innerConeAngle:24,outerConeAngle:38,castShadows:false});e.setLocalEulerAngles(82,0,0);bodyVisual.addChild(e);e.enabled=false;return{e,side};});
+function toggleHeadlights(){headlights=!headlights;vehicleAudio.headlights();$('headlight-toggle').setAttribute('aria-pressed',String(headlights));$('headlight-toggle').textContent=headlights?'Headlights on':'Headlights off';}
+$('headlight-toggle').onclick=toggleHeadlights;
+addEventListener('keydown',e=>{if(e.code==='KeyH'&&!e.repeat&&!/INPUT|TEXTAREA/.test(e.target.tagName))toggleHeadlights();});
+chassis.addEventListener('collide',e=>{if(!paused&&modelReady)vehicleAudio.impact(Math.abs(e.contact.getImpactVelocityAlongNormal()));});
+function reset(pose=spawnPoint){driveGearSequence.reset();waterSplashes.reset();exhaustSmoke.reset();chassis.position.set(pose.x,testingGround.heightAt(pose.x,pose.z)+tuning.rideHeight+.15,pose.z);chassis.quaternion.setFromAxisAngle(new C.Vec3(0,1,0),pose.yaw);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.force.setZero();chassis.torque.setZero();chassis.wakeUp();steering=0;cameraYaw=0;cameraPitch=view===2?.10:.30;for(const state of wheelState){state.previousSteer=state.steer=0;state.previousSpin=state.spin=0;state.previousLength=state.length=tuning.restLength;}chassis.previousPosition.copy(chassis.position);chassis.interpolatedPosition.copy(chassis.position);chassis.previousQuaternion.copy(chassis.quaternion);chassis.interpolatedQuaternion.copy(chassis.quaternion);chassis.aabbNeedsUpdate=true;for(let i=0;i<4;i++){vehicle.setSteeringValue(0,i);vehicle.setBrake(0,i);vehicle.applyEngineForce(0,i);}const back=chassis.quaternion.vmult(new C.Vec3(5,4.5,10));camPos.set(chassis.position.x+back.x,chassis.position.y+back.y,chassis.position.z+back.z);}
 reset();
 function resetToTrack(){if(networkLock.race)return;keys.clear();const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));const pose=nearestTrackPose([testingGround.meta.trail,...(testingGround.meta.routes||[]).map(r=>r.points)],chassis.position,forward)||spawnPoint;reset(pose);$('status').textContent='Returned to the nearest track centre.';}
 $('reset-track').onclick=resetToTrack;
 let lastCameraChange=-1000;
 function selectCamera(mode){view=mode;cameraYaw=0;cameraPitch=view===2?.10:.30;document.body.classList.toggle('cockpit',view===2);$('view-name').textContent=['CHASE CAMERA','ORBIT CAMERA','DRIVER SEAT'][view];camera.camera.fov=view===2?68:58;if(activeModel)for(const mi of activeModel.glassInstances)mi.visible=view!==2;}
 function cycleCamera(){if(performance.now()-lastCameraChange<250)return;lastCameraChange=performance.now();selectCamera((view+1)%3);}
-addEventListener('keydown',e=>{if($('vehicle-picker').open||document.getElementById('online-dialog')?.open)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(!e.repeat&&e.code==='KeyR')resetToTrack();if(!e.repeat&&e.code==='KeyF')selectCamera(2);if(!e.repeat&&e.code==='KeyC'){cycleCamera();}});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();paused=true;});addEventListener('focus',()=>paused=$('vehicle-picker').open||document.getElementById('online-dialog')?.open);$('reset').onclick=resetToTrack;$('camera-toggle').onclick=cycleCamera;$('driver-view').onclick=()=>selectCamera(2);
+addEventListener('keydown',e=>{if($('vehicle-picker').open||document.getElementById('online-dialog')?.open)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(!e.repeat&&!paused&&!networkLock.freeze){if(['KeyW','ArrowUp'].includes(e.code))vehicleAudio.direction(1);else if(['KeyS','ArrowDown'].includes(e.code))vehicleAudio.direction(-1);}if(!e.repeat&&e.code==='KeyR')resetToTrack();if(!e.repeat&&e.code==='KeyF')selectCamera(2);if(!e.repeat&&e.code==='KeyC'){cycleCamera();}});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();paused=true;});addEventListener('focus',()=>paused=$('vehicle-picker').open||document.getElementById('online-dialog')?.open);$('reset').onclick=resetToTrack;$('camera-toggle').onclick=cycleCamera;$('driver-view').onclick=()=>selectCamera(2);
 // Pointer lock keeps mouse movement relative while the camera follows the vehicle.
 function fallbackMouseLook(){softMouseLook=true;canvas.style.cursor='none';$('mouse-hint').textContent='MOUSE LOOK ON · ESC TO RELEASE';$('status').textContent='Preview mouse look active. A regular browser supports full cursor lock.';}
 canvas.addEventListener('click',()=>{if(document.pointerLockElement!==canvas){try{const request=canvas.requestPointerLock();request?.catch?.(fallbackMouseLook);}catch{fallbackMouseLook();}}});
@@ -82,7 +97,7 @@ addEventListener('mousemove',e=>{if(document.pointerLockElement!==canvas&&!orbit
 canvas.addEventListener('wheel',e=>{e.preventDefault();cameraDistance=Math.max(4,Math.min(22,cameraDistance+e.deltaY*.008));},{passive:false});
 document.addEventListener('pointerlockchange',()=>{softMouseLook=false;canvas.style.cursor=document.pointerLockElement===canvas?'none':'grab';$('mouse-hint').textContent=document.pointerLockElement===canvas?'MOUSE LOOK ON · ESC TO RELEASE':'CLICK SCENE TO LOOK AROUND';});
 const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));
-function controls(dt){if(networkLock.freeze){for(let i=0;i<4;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const speed=signedSpeed(),throttle=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0),turn=(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)-(keys.has('KeyD')||keys.has('ArrowRight')?1:0);const limit=.5/(1+Math.abs(speed)*.055);steering+=(turn*limit-steering)*(1-Math.exp(-dt*7));const turnRadius=tuning.wheelbase/Math.tan(Math.max(.0001,Math.abs(steering)));const inner=Math.atan(tuning.wheelbase/(turnRadius-tuning.track/2)),outer=Math.atan(tuning.wheelbase/(turnRadius+tuning.track/2));vehicle.setSteeringValue(Math.sign(steering)*(steering>0?inner:outer),0);vehicle.setSteeringValue(Math.sign(steering)*(steering>0?outer:inner),1);const braking=throttle!==0&&speed*throttle<-.7;const speedLimit=throttle<0?11:44;const powerLimited=Math.min(tuning.engineForce,190000/(4*Math.max(1,Math.abs(speed))));const limiter=Math.max(0,Math.min(1,(speedLimit-Math.abs(speed))/3));const force=braking?0:throttle*powerLimited*limiter;const burnout=keys.has('Space')&&throttle!==0&&!braking&&Math.abs(speed)<8;for(let i=0;i<4;i++){vehicle.applyEngineForce(burnout?(i>1?force*1.15:0):(tuning.rearDrive&&i<2?0:force),i);vehicle.setBrake(braking?tuning.brake:throttle===0?(Math.abs(speed)<.8?45:.25):0,i);testingGround.applyWheelSurface(vehicle,chassis,tuning,i,keys.has('Space')&&i>1);if(burnout){vehicle.setBrake(i<2?120:0,i);if(i>1)vehicle.wheelInfos[i].frictionSlip*=.2;}else if(keys.has('Space')&&i>1)vehicle.setBrake(150,i);}if(Math.abs(speed)>1){const drag=-speed*Math.abs(speed)*.55;chassis.applyForce(chassis.quaternion.vmult(new C.Vec3(0,0,-drag)));}}
+function controls(dt){if(networkLock.freeze){for(let i=0;i<4;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const speed=signedSpeed(),throttle=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0),turn=(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)-(keys.has('KeyD')||keys.has('ArrowRight')?1:0);const gearPhase=driveGearSequence.update({speed,throttle},dt);if(gearPhase.mode==='shifting'){if(gearPhase.shift){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));chassis.velocity.vsub(forward.scale(speed),chassis.velocity);}for(let i=0;i<4;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const limit=.5/(1+Math.abs(speed)*.055);steering+=(turn*limit-steering)*(1-Math.exp(-dt*7));const turnRadius=tuning.wheelbase/Math.tan(Math.max(.0001,Math.abs(steering)));const inner=Math.atan(tuning.wheelbase/(turnRadius-tuning.track/2)),outer=Math.atan(tuning.wheelbase/(turnRadius+tuning.track/2));vehicle.setSteeringValue(Math.sign(steering)*(steering>0?inner:outer),0);vehicle.setSteeringValue(Math.sign(steering)*(steering>0?outer:inner),1);const braking=throttle!==0&&speed*throttle<-.7;const speedLimit=throttle<0?11:44;const powerLimited=Math.min(tuning.engineForce,190000/(4*Math.max(1,Math.abs(speed))));const limiter=Math.max(0,Math.min(1,(speedLimit-Math.abs(speed))/3));const force=braking?0:throttle*powerLimited*limiter;const burnout=keys.has('Space')&&throttle!==0&&!braking&&Math.abs(speed)<8;for(let i=0;i<4;i++){vehicle.applyEngineForce(burnout?(i>1?force*1.15:0):(tuning.rearDrive&&i<2?0:force),i);vehicle.setBrake(braking?tuning.brake:throttle===0?(Math.abs(speed)<.8?45:.25):0,i);testingGround.applyWheelSurface(vehicle,chassis,tuning,i,keys.has('Space')&&i>1);if(burnout){vehicle.setBrake(i<2?120:0,i);if(i>1)vehicle.wheelInfos[i].frictionSlip*=.2;}else if(keys.has('Space')&&i>1)vehicle.setBrake(150,i);}if(Math.abs(speed)>1){const drag=-speed*Math.abs(speed)*.55;chassis.applyForce(chassis.quaternion.vmult(new C.Vec3(0,0,-drag)));}}
 // Capture suspension and rolling angle at each physics step, then interpolate for rendering.
 world.addEventListener('preStep',()=>{controls(1/120);vehicle.updateVehicle(1/120);});
 world.addEventListener('postStep',()=>{
@@ -152,7 +167,13 @@ app.on('update',dt=>{
   chassis.previousQuaternion.slerp(chassis.quaternion,alpha,chassis.interpolatedQuaternion);
  }
  sync();driver.update(steering,view);updateCamera(dt);testingGround.updateVisibility?.(camera.getPosition(),dt);online?.update(dt,chassis.position);if(!paused){drivingSoil.update(activeModel,vehicle,chassis,tuning,dt,wheelState);if(modelReady){waterSplashes.update(activeVehicleId,vehicle,chassis,tuning,dt);const throttle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));exhaustSmoke.update(activeVehicleId,bodyVisual,chassis,vehicleScale,throttle,signedSpeed(),dt);}}
- $('speed').textContent=Math.round(Math.abs(signedSpeed())*3.6);
+ const soundSpeed=signedSpeed(),soundThrottle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown')),soundBraking=(soundThrottle!==0&&soundSpeed*soundThrottle<-.7)||keys.has('Space');
+ vehicleLights.update(activeModel,headlights,soundBraking);
+ weather.update(dt,{view,body:bodyVisual,profile:tuning,scale:vehicleScale,paused});
+ wipers.update(activeVehicleId,weather.rain,dt,vehicleScale);
+ const lamp=lampProfiles[activeVehicleId];for(const {e,side} of headlightBeams){e.enabled=headlights&&modelReady;if(lamp)e.setLocalPosition(side*(lamp.f[0]+lamp.f[1])*.5*vehicleScale,(lamp.f[2]+lamp.f[3])*.5*vehicleScale,lamp.f[4]*vehicleScale-.04);}
+ vehicleAudio.update({speed:soundSpeed,throttle:paused||networkLock.freeze?0:soundThrottle,brake:soundBraking,burnout:keys.has('Space')&&soundThrottle!==0&&Math.abs(soundSpeed)<8,grounded:vehicle.wheelInfos.some(w=>w.isInContact),paused:paused||!modelReady||carLoading},dt);
+ $('speed').textContent=Math.round(Math.abs(soundSpeed)*3.6);
  if(activeModel?.soil)canvas.dataset.soil=JSON.stringify(activeModel.soil.groups.map(g=>({mud:+g.state.mud.toFixed(3),dust:+g.state.dust.toFixed(3)})));
  if(chassis.position.y< -30||Math.abs(chassis.position.x)>testingGround.meta.size/2-4||Math.abs(chassis.position.z)>testingGround.meta.size/2-4){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));reset(nearestTrackPose([testingGround.meta.trail,...(testingGround.meta.routes||[]).map(r=>r.points)],chassis.position,forward)||spawnPoint);}
 });
@@ -205,11 +226,16 @@ vehicleProfiles["sterrato"]={...vehicleProfiles.suv,...{"url":"./assets/sterrato
 vehicleProfiles.sterrato.eye[1]-=.09;vehicleProfiles.sterrato.cockpitEye[1]-=.09;
 vehicleProfiles.urus.eye=[-.43,.78,-.10];vehicleProfiles.urus.cockpitEye=[-.43,.78,-.10];
 vehicleProfiles.urus.steeringPosition=[-.43,.48,-.64];vehicleProfiles.urus.steeringAxis=[0,.342,.94];vehicleProfiles.urus.steeringGripRadius=.165;
+// Seat behind the Safari's sloping windshield, with the wheel inside the cabin.
+vehicleProfiles.safari.cockpitEye=[-.395,1.02,.12];vehicleProfiles.safari.eye=[-.395,1.02,.12];vehicleProfiles.safari.steeringPosition=[-.395,.76,-.42];
+vehicleProfiles.safari.display=[-.395,.79,-.64];vehicleProfiles.safari.displayEnabled=true;
 let activeVehicleId=vehicleProfiles[new URLSearchParams(location.search).get('vehicle')]?new URLSearchParams(location.search).get('vehicle'):'range-rover';
 function cycleVehicle(){const ids=Object.keys(vehicleProfiles);loadCar(ids[(ids.indexOf(activeVehicleId)+1)%ids.length]);}
 $('vehicle-toggle').onclick=cycleVehicle;
 addEventListener('keydown',e=>{if(!e.repeat&&e.code==='KeyV'&&!$('vehicle-picker').open&&!document.getElementById('online-dialog')?.open)cycleVehicle();});
 const modelCache=new Map(),storedSoil=new Map();let activeModel=null,carLoading=false;
+let requestedRaceVehicle=null,raceVehicleLoading=false;
+async function followHostVehicle(id){requestedRaceVehicle=id;if(raceVehicleLoading)return;raceVehicleLoading=true;try{while(requestedRaceVehicle){const target=requestedRaceVehicle;requestedRaceVehicle=null;while(carLoading)await new Promise(resolve=>setTimeout(resolve,25));if(requestedRaceVehicle)continue;if(vehicleProfiles[target]&&target!==activeVehicleId)await loadCar(target,true);}}finally{raceVehicleLoading=false;}}
 const picker=createVehiclePicker(vehicleProfiles,id=>loadCar(id),open=>{keys.clear();paused=open;if(open){document.exitPointerLock?.();softMouseLook=false;canvas.style.cursor='grab';}});
 picker.update(activeVehicleId,false);
 function applyVehicleProfile(profile,preservePosition=false){
@@ -239,6 +265,14 @@ async function loadCar(id='range-rover',authoritative=false){
   const profile=vehicleProfiles[id];let entry=modelCache.get(id);
   if(!entry){
    const asset=await loadContainer(profile.url);const model=asset.resource.instantiateRenderEntity();model.setLocalScale(vehicleScale,vehicleScale,vehicleScale);bodyVisual.addChild(model);
+   if(id==='safari'){
+    const dash=material('Safari fitted dashboard',[.045,.052,.055],.8),trim=material('Safari satin trim',[.19,.21,.22],.4,.5),recess=material('Safari vent recess',[.009,.013,.015]);
+    const box=(name,pos,size,mat)=>{const e=new pc.Entity(name);e.addComponent('render',{type:'box'});e.render.material=mat;e.setLocalPosition(...pos);e.setLocalScale(...size);model.addChild(e);return e;};
+    box('Fitted lower dashboard',[0,.59,-.61],[1.43,.19,.32],dash);box('Dashboard upper pad',[0,.69,-.65],[1.43,.055,.36],dash);
+    box('Instrument binnacle',[-.395,.78,-.675],[.42,.19,.10],dash);box('Centre console',[.12,.51,-.48],[.29,.30,.17],dash);
+    for(const x of [-.64,.02,.34,.63]){box('Air vent',[x,.635,-.435],[.13,.062,.012],recess);for(let i=-1;i<=1;i++)box('Vent slat',[x,.635+i*.015,-.426],[.115,.004,.005],trim);}
+    box('Dashboard satin strip',[.30,.685,-.453],[.74,.015,.015],trim);
+   }
    const wheels=['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR'].map(n=>model.findByName(n));
    if(!wheels.every(Boolean)){model.destroy();throw Error('Vehicle is missing a wheel assembly');}
    const brakes=['Brake_FL','Brake_FR','Brake_RL','Brake_RR'].map(n=>model.findByName(n));
@@ -256,9 +290,10 @@ async function loadCar(id='range-rover',authoritative=false){
   modelCache.delete(id);modelCache.set(id,entry);
   while(modelCache.size>3){const [oldId,old]=modelCache.entries().next().value;modelCache.delete(oldId);
    storedSoil.set(oldId,old.soil.groups.map(g=>({...g.state})));
-   for(const part of [old.model,...old.wheels,...old.brakes])if(part)part.destroy();
+   vehicleLights.destroy(old);for(const part of [old.model,...old.wheels,...old.brakes])if(part)part.destroy();
    app.assets.remove(old.asset);old.asset.unload();
   }
+  if(!entry.lights)vehicleLights.attach(entry,id);vehicleAudio.select(id);
   activeVehicleId=id;const url=new URL(location.href);url.searchParams.set('vehicle',id);history.replaceState(null,'',url);$('vehicle-toggle').textContent='V · '+profile.label;
   loadedWheels=entry.wheels;loadedBrakes=entry.brakes;steeringVisual=entry.steering;if(steeringVisual){steeringVisual.setLocalPosition(...profile.steeringPosition);entry.steeringRest??=steeringVisual.getLocalRotation().clone();}
   for(const w of wheelVisuals)w.enabled=false;applyVehicleProfile(profile,modelReady);driver.fit(profile,vehicleScale);driver.update(steering,view);modelReady=true;if(pendingNetworkPose){reset(pendingNetworkPose);pendingNetworkPose=null;}
@@ -279,6 +314,7 @@ for(const x of [-7,7]){const post=new pc.Entity('Checkpoint post');post.addCompo
 const beam=new pc.Entity('Checkpoint beam');beam.addComponent('render',{type:'box',castShadows:false});beam.render.material=checkpointMaterial;beam.setLocalPosition(0,5.4,0);beam.setLocalScale(14,.18,.18);checkpoint.addChild(beam);
 online=createMultiplayer({
  getVehicle:()=>activeVehicleId,isReady:()=>modelReady&&!carLoading,
+ onVehicle:followHostVehicle,
  getState:()=>({p:[chassis.position.x,chassis.position.y,chassis.position.z],q:[chassis.quaternion.x,chassis.quaternion.y,chassis.quaternion.z,chassis.quaternion.w],w:wheelState.map(w=>[Math.max(0,w.length),w.spin,w.steer]),steer:steering,speed:signedSpeed()}),
  onRestore:async state=>{if(!state?.p||!state?.q)return;if(networkLock.vehicle&&vehicleProfiles[state.vehicle]&&state.vehicle!==activeVehicleId)await loadCar(state.vehicle,true);chassis.position.set(...state.p);chassis.quaternion.set(...state.q);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.previousPosition.copy(chassis.position);chassis.interpolatedPosition.copy(chassis.position);chassis.previousQuaternion.copy(chassis.quaternion);chassis.interpolatedQuaternion.copy(chassis.quaternion);chassis.aabbNeedsUpdate=true;chassis.wakeUp();camPos.set(chassis.position.x+5,chassis.position.y+4.5,chassis.position.z+10);},
  onGrid:pose=>{keys.clear();if(modelReady)reset(pose);else pendingNetworkPose=pose;},

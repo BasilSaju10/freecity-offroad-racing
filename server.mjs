@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve,extname,sep,relative} from 'node:path';
 import {attachMultiplayer} from './multiplayer-server.mjs';
 const root=fileURLToPath(new URL('.',import.meta.url));
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.bin':'application/octet-stream'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.bin':'application/octet-stream','.wav':'audio/wav','.mp3':'audio/mpeg'};
 let manifest={files:[]};try{manifest=JSON.parse(await readFile(new URL('./asset-manifest.json',import.meta.url)));}catch{}
 const assets=new Map(manifest.files.map(f=>[f.path,f]));
 const meta=JSON.parse(await readFile(new URL('./assets/map/physics.json',import.meta.url)));
@@ -14,6 +14,7 @@ export const server=createServer(async(req,res)=>{try{
  const url=new URL(req.url,'http://localhost');if(url.pathname==='/healthz'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true}));return;}
  const publicOrigin=process.env.OFFRIDE_PUBLIC_URL;if(publicOrigin&&new URL(publicOrigin).host!==req.headers.host&&(url.pathname==='/'||url.pathname==='/index.html')){res.writeHead(302,{Location:new URL('/'+url.search,publicOrigin).href,'Cache-Control':'no-store'});res.end();return;}
  let name=decodeURIComponent(url.pathname);if(name==='/')name='/index.html';let path=resolve(root,'.'+name);const rel=relative(root,path);
+ if(process.env.OFFRIDE_LOCAL_ONLY==='1'&&name==='/boot.js'){const boot='window.offridePrivatePreview=true;\n'+await readFile(new URL('./boot.js',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(boot);return;}
  if(!path.startsWith(resolve(root)+sep)||rel.split(/[\\/]/).some(p=>p.startsWith('.'))||/node_modules|editable\.blend/i.test(rel)||!Object.keys(types).includes(extname(path))){res.writeHead(404);res.end('Not found');return;}
  const canonical=await realpath(path);if(!canonical.startsWith(resolve(root)+sep))throw Error('Outside public root');let info=await stat(path);if(!info.isFile())throw Error('Not a file');
  const asset=assets.get(rel.replaceAll('\\','/')),versioned=asset&&url.searchParams.get('v')===asset.hash,etag='"'+(asset?.hash||info.size+'-'+Math.floor(info.mtimeMs))+'"';

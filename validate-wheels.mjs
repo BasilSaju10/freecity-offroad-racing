@@ -1,3 +1,4 @@
+import {createDriveSoundSequence} from './drive-sound-sequence.js';
 import * as C from './vendor/cannon-es.js';
 import {Quat} from './vendor/playcanvas/core/math/quat.js';
 import {Vec3} from './vendor/playcanvas/core/math/vec3.js';
@@ -5,7 +6,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const source=readFileSync(new URL('./main.js',import.meta.url),'utf8');
 const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
-const controls=source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const controls='const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
 const rendering=source.slice(source.indexOf('// Capture suspension'),source.indexOf('function updateCamera'));
 class Visual{p=new Vec3();q=new Quat();setPosition(...a){this.p.copy(a[0] instanceof Vec3?a[0]:new Vec3(...a));}setRotation(q){this.q.copy(q);}getPosition(){return this.p;}}
 const factory=new Function('C','pc','world','Visual',`const testingGround={applyWheelSurface(v,b,t,i,h){v.wheelInfos[i].frictionSlip=h?1:2.5;}};`+setup+`const keys=new Set();let steering=0;const steeringVisual=null;const bodyVisual=new Visual();const wheelVisuals=Array.from({length:4},()=>new Visual()),loadedWheels=Array.from({length:4},()=>new Visual()),loadedBrakes=Array.from({length:4},()=>new Visual());const wheelState=vehicle.wheelInfos.map(()=>({previousLength:tuning.restLength,length:tuning.restLength,previousSpin:0,spin:0,previousSteer:0,steer:0}));const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));${controls}${rendering};return {keys,chassis,vehicle,wheelState,sync,loadedWheels,loadedBrakes};`);

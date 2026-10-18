@@ -8,7 +8,8 @@ const storage=()=>({getItem:()=>null,setItem(){}});
 const source=readFileSync(new URL('./multiplayer-client.js',import.meta.url),'utf8').replace('export function','function');
 const factory=new Function('document','window','WebSocket','sessionStorage','localStorage','location','history','setInterval','clearInterval','setTimeout','clearTimeout',source+';return createMultiplayer;');
 const create=factory(document,{addEventListener(){}},Socket,storage(),storage(),{protocol:'https:',host:'test.invalid',href:'https://test.invalid/'},{replaceState(){}},fn=>{timers.push(fn);return 1;},()=>{},fn=>{retries.push(fn);return 1;},()=>{});
-create({getState:()=>({p:[0,1,0],q:[0,0,0,1]}),getVehicle:()=> 'suv',isReady:()=>true,onGrid(){},onLock(){},onMenu(){},remotes:{clear(){},receive(){},update(){}},showCheckpoint(){}});
+let activeCar='suv',lastLock,requestedCars=[];
+const client=create({getState:()=>({p:[0,1,0],q:[0,0,0,1]}),getVehicle:()=>activeCar,onVehicle:id=>requestedCars.push(id),isReady:()=>true,onGrid(){},onLock:s=>lastLock=s,onMenu(){},remotes:{clear(){},receive(){},update(){}},showCheckpoint(){}});
 const message=(ws,data)=>ws.onmessage({data:JSON.stringify(data)});
 const first=sockets[0];first.onopen();message(first,{type:'welcome',id:'one',token:'token',mode:null});document.getElementById('join-free').onclick();message(first,{type:'joined',mode:'free',spawn:{x:0,z:0,yaw:0}});
 timers[0]();assert(first.sent.some(m=>m.type==='state'),'publishes a stationary pose without rendering a frame');
@@ -17,3 +18,5 @@ message(second,{type:'joined',mode:'free'});document.getElementById('create-room
 message(third,{type:'directory',players:[{id:'three',name:'Me',connected:true,available:true}]});assert.equal(document.getElementById('online-count').textContent,'1 player online');
 message(third,{type:'invitation',invitation:{id:'invite',host:'Host',code:'ABC123',expires:Date.now()+30000}});assert.equal(document.getElementById('race-invitation').hidden,false);document.getElementById('accept-invite').onclick();assert(third.sent.some(m=>m.type==='answerInvite'&&m.accept));
 console.log('Client lifecycle: publishes without frames, rejoins free roam, explains expired rooms.');
+
+message(third,{type:'room',room:{code:'ABC123',hostId:'host',vehicle:'urus',phase:'lobby',players:[{id:'host',connected:true,ready:false},{id:'three',connected:true,ready:false}],race:null}});assert.deepEqual(requestedCars,['urus']);assert(lastLock.vehicle,'guest vehicle selection is locked in lobby');assert(document.getElementById('ready-race').disabled,'cannot ready before host car loads');activeCar='urus';client.update(0,{x:0,z:0});assert.equal(document.getElementById('ready-race').disabled,false);message(third,{type:'room',room:{code:'ABC123',hostId:'host',vehicle:'raptor',phase:'lobby',players:[{id:'host',connected:true,ready:false},{id:'three',connected:true,ready:false}],race:null}});assert.deepEqual(requestedCars,['urus','raptor']);console.log('Passed: automatic host-car selection, guest lock and ready gating.');

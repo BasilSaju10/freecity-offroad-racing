@@ -1,3 +1,4 @@
+import {createDriveSoundSequence} from './drive-sound-sequence.js';
 import {fileURLToPath} from 'node:url';
 process.chdir(fileURLToPath(new URL('.',import.meta.url)));
 import * as C from './vendor/cannon-es.js';
@@ -8,7 +9,7 @@ import assert from 'node:assert/strict';
 const source=readFileSync('main.js','utf8'),meta=JSON.parse(readFileSync('assets/map/physics.json')),bytes=readFileSync('assets/map/heights.bin');
 const definitions=source.slice(source.indexOf('const vehicleProfiles='),source.indexOf('let activeVehicleId=')),profiles=new Function(definitions+'return vehicleProfiles;')();
 const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
-const controls=source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const controls='const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
 const apply=source.slice(source.indexOf('function applyVehicleProfile('),source.indexOf('async function loadCar('));
 const factory=new Function('C','world','testingGround',setup+`const keys=new Set();let steering=0;const steeringAxis={set(){return this;},normalize(){}};const dashboardDisplay={setLocalPosition(){},setLocalScale(){}};function reset(){};const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));${controls}${apply};return{keys,chassis,vehicle,tuning,controls,signedSpeed,applyVehicleProfile};`);
 const reports=[];

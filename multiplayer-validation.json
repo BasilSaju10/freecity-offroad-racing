@@ -13,6 +13,7 @@
   "applicationHeartbeatCleanup": true,
   "positionPreservedOnReconnect": true,
   "invitationsAcceptAndReject": true,
+  "hostVehicleForAllRacers": true,
   "resultsAndRematch": true,
   "reconnection": true,
   "hostTransfer": true,
