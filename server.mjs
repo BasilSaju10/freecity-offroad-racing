@@ -13,6 +13,8 @@ export const server=createServer(async(req,res)=>{try{
  if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405);res.end();return;}
  const url=new URL(req.url,'http://localhost');if(url.pathname==='/healthz'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true}));return;}
  const publicOrigin=process.env.OFFRIDE_PUBLIC_URL;if(publicOrigin&&new URL(publicOrigin).host!==req.headers.host&&(url.pathname==='/'||url.pathname==='/index.html')){res.writeHead(302,{Location:new URL('/'+url.search,publicOrigin).href,'Cache-Control':'no-store'});res.end();return;}
+ const indexingFiles={'/robots.txt':'text/plain; charset=utf-8','/sitemap.xml':'application/xml; charset=utf-8'};
+ if(indexingFiles[url.pathname]){const content=await readFile(new URL('.'+url.pathname,import.meta.url));res.writeHead(200,{'Content-Type':indexingFiles[url.pathname],'Content-Length':content.length,'Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:content);return;}
  let name=decodeURIComponent(url.pathname);if(name==='/')name='/index.html';let path=resolve(root,'.'+name);const rel=relative(root,path);
  if(process.env.OFFRIDE_LOCAL_ONLY==='1'&&name==='/boot.js'){const boot='window.offridePrivatePreview=true;\n'+await readFile(new URL('./boot.js',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(boot);return;}
  if(!path.startsWith(resolve(root)+sep)||rel.split(/[\\/]/).some(p=>p.startsWith('.'))||/node_modules|editable\.blend/i.test(rel)||!Object.keys(types).includes(extname(path))){res.writeHead(404);res.end('Not found');return;}
