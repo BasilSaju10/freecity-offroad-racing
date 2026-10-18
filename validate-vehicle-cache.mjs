@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('./main.js',import.meta.url),'utf8'),start=source.indexOf('  // Keep only three heavy models resident;'),end=source.indexOf('  activeVehicleId=id;',start),run=new Function('id','entry','modelCache','storedSoil','app','vehicleLights','vehicleAudio',source.slice(start,end));
 const removed=[],unloaded=[],destroyed=[],map=new Map(),soil=new Map();const app={assets:{remove(a){removed.push(a.id);}}};
-function entry(id){const part=name=>({destroy(){destroyed.push(name)}});return{asset:{id,unload(){unloaded.push(id)}},model:part(id+' body'),wheels:Array.from({length:4},(_,i)=>part(id+' wheel '+i)),brakes:[],soil:{groups:Array.from({length:5},()=>({state:{mud:.3,dust:.4,wet:.2}}))}};}
+function entry(id){const part=name=>({destroy(){destroyed.push(name)}});return{asset:{id},lease:{release(){removed.push(id);unloaded.push(id);}},model:part(id+' body'),wheels:Array.from({length:4},(_,i)=>part(id+' wheel '+i)),brakes:[],soil:{groups:Array.from({length:5},()=>({state:{mud:.3,dust:.4,wet:.2}}))}};}
 for(const id of ['a','b','c','d','e']){const e=entry(id);map.set(id,e);run(id,e,map,soil,app,{attach(){e.lights={};},destroy(){}},{select(){}});assert(map.size<=3);}
 assert.deepEqual([...map.keys()],['c','d','e']);assert.deepEqual(removed,['a','b']);assert.deepEqual(unloaded,['a','b']);assert.equal(destroyed.length,10);assert.equal(soil.get('a')[1].mud,.3);
 run('c',map.get('c'),map,soil,app,{attach(){},destroy(){}},{select(){}});assert.deepEqual([...map.keys()],['d','e','c']);assert.equal(unloaded.length,2);console.log('Vehicle cache: LRU limit, entity disposal, asset unloading and dirt retention passed');

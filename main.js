@@ -6,6 +6,7 @@ import {createMultiplayer} from './multiplayer-client.js';
 import {createVehicleAudio} from './vehicle-audio.js';
 import {createVehicleLights} from './vehicle-lights.js';
 import {createRemoteDrivers} from './remote-drivers.js';
+import {createVehicleAssets} from './vehicle-assets.js';
 import {nearestTrackPose} from './track-reset.js';
 import {createWaterSplashes} from './water-splashes.js';
 import {createExhaustSmoke} from './exhaust-smoke.js';
@@ -22,6 +23,7 @@ import * as C from './vendor/cannon-es.js';
 
 const $ = id => document.getElementById(id);
 const app = new pc.Application($('canvas'), { graphicsDeviceOptions: { antialias: true, alpha: false } });
+const vehicleAssets=createVehicleAssets(pc,app);
 app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW); app.setCanvasResolution(pc.RESOLUTION_AUTO);
 app.graphicsDevice.maxPixelRatio = Math.min(devicePixelRatio, 1.7);
 window.addEventListener('resize', () => app.resizeCanvas());
@@ -261,10 +263,11 @@ function applyVehicleProfile(profile,preservePosition=false){
 async function loadCar(id='range-rover',authoritative=false){
  if(networkLock.vehicle&&id!==activeVehicleId&&!authoritative)return;
  if(carLoading)return;carLoading=true;picker.update(activeVehicleId,true,id);$('vehicle-toggle').disabled=true;$('vehicle-toggle').textContent='Loading vehicleâ€¦';$('status').textContent='Loading vehicle...';
+ let preparing=null;
  try{
   const profile=vehicleProfiles[id];let entry=modelCache.get(id);
   if(!entry){
-   const asset=await loadContainer(profile.url);const model=asset.resource.instantiateRenderEntity();model.setLocalScale(vehicleScale,vehicleScale,vehicleScale);bodyVisual.addChild(model);
+   const lease=vehicleAssets.acquire(profile.url);preparing={lease};const asset=await lease.promise;const model=asset.resource.instantiateRenderEntity();preparing.model=model;model.setLocalScale(vehicleScale,vehicleScale,vehicleScale);bodyVisual.addChild(model);
    if(id==='safari'){
     const dash=material('Safari fitted dashboard',[.045,.052,.055],.8),trim=material('Safari satin trim',[.19,.21,.22],.4,.5),recess=material('Safari vent recess',[.009,.013,.015]);
     const box=(name,pos,size,mat)=>{const e=new pc.Entity(name);e.addComponent('render',{type:'box'});e.render.material=mat;e.setLocalPosition(...pos);e.setLocalScale(...size);model.addChild(e);return e;};
@@ -274,15 +277,16 @@ async function loadCar(id='range-rover',authoritative=false){
     box('Dashboard satin strip',[.30,.685,-.453],[.74,.015,.015],trim);
    }
    const wheels=['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR'].map(n=>model.findByName(n));
-   if(!wheels.every(Boolean)){model.destroy();throw Error('Vehicle is missing a wheel assembly');}
+   if(!wheels.every(Boolean))throw Error('Vehicle is missing a wheel assembly');
    const brakes=['Brake_FL','Brake_FR','Brake_RL','Brake_RR'].map(n=>model.findByName(n));
+   preparing.wheels=wheels;preparing.brakes=brakes;
    for(const part of [...wheels,...brakes])if(part){part.reparent(app.root);part.setLocalScale(vehicleScale,vehicleScale,vehicleScale);}
    for(const part of [model,...wheels,...brakes])if(part)part.enabled=false;
    for(const materialAsset of asset.resource.materials){const m=materialAsset.resource;const name=m.name.toLowerCase();m.useDynamicRefraction=false;m.refraction=0;if(profile.twoSidedBody)m.cull=pc.CULLFACE_NONE;m.update();if(isCabinGlass(name)){m.diffuse.set(.55,.68,.78);m.diffuseMap=null;m.opacityMap=null;m.blendType=pc.BLEND_NORMAL;m.opacity=.18;m.depthWrite=false;m.cull=pc.CULLFACE_NONE;m.update();}if(name.includes('bodywork')||name.includes('car_paint')){m.clearCoat=.8;m.clearCoatGloss=.93;m.update();}}
    solidifyWheelSurfaces(pc,model,wheels,brakes);
    if(id==='suv')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/^Detail \d+$/i.test(m.name)){m.diffuse.set(.72,.77,.80);m.metalness=1;m.gloss=.87;m.useMetalness=true;m.update();}if(/bodywork/i.test(m.name)){m.diffuse.set(.009,.011,.013);m.diffuseMap=null;m.metalness=.03;m.gloss=.10;m.clearCoat=0;m.update();}}
    if(id==='range-rover')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/interior(018|005|010)1Mtl$/i.test(m.name)){m.diffuse.mulScalar(.18);m.update();}}
-   const glassInstances=model.findComponents('render').flatMap(r=>r.meshInstances).filter(mi=>isCabinGlass(mi.material.name));entry={asset,model,wheels,brakes,glassInstances,steering:model.findByName('Steering'),steeringRest:null};drivingSoil.attach(entry,profile,vehicleScale,isCabinGlass);if(storedSoil.has(id))entry.soil.groups.forEach((g,i)=>Object.assign(g.state,storedSoil.get(id)[i]));modelCache.set(id,entry);
+   const glassInstances=model.findComponents('render').flatMap(r=>r.meshInstances).filter(mi=>isCabinGlass(mi.material.name));entry={asset,lease,model,wheels,brakes,glassInstances,steering:model.findByName('Steering'),steeringRest:null};drivingSoil.attach(entry,profile,vehicleScale,isCabinGlass);if(storedSoil.has(id))entry.soil.groups.forEach((g,i)=>Object.assign(g.state,storedSoil.get(id)[i]));modelCache.set(id,entry);preparing=null;
   }
   if(activeModel)for(const part of [activeModel.model,...activeModel.wheels,...activeModel.brakes])if(part)part.enabled=false;
   activeModel=entry;for(const mi of entry.glassInstances)mi.visible=view!==2;for(const part of [entry.model,...entry.wheels,...entry.brakes])if(part)part.enabled=true;
@@ -291,14 +295,14 @@ async function loadCar(id='range-rover',authoritative=false){
   while(modelCache.size>3){const [oldId,old]=modelCache.entries().next().value;modelCache.delete(oldId);
    storedSoil.set(oldId,old.soil.groups.map(g=>({...g.state})));
    vehicleLights.destroy(old);for(const part of [old.model,...old.wheels,...old.brakes])if(part)part.destroy();
-   app.assets.remove(old.asset);old.asset.unload();
+   old.lease.release();
   }
   if(!entry.lights)vehicleLights.attach(entry,id);vehicleAudio.select(id);
   activeVehicleId=id;const url=new URL(location.href);url.searchParams.set('vehicle',id);history.replaceState(null,'',url);$('vehicle-toggle').textContent='V · '+profile.label;
   loadedWheels=entry.wheels;loadedBrakes=entry.brakes;steeringVisual=entry.steering;if(steeringVisual){steeringVisual.setLocalPosition(...profile.steeringPosition);entry.steeringRest??=steeringVisual.getLocalRotation().clone();}
   for(const w of wheelVisuals)w.enabled=false;applyVehicleProfile(profile,modelReady);driver.fit(profile,vehicleScale);driver.update(steering,view);modelReady=true;if(pendingNetworkPose){reset(pendingNetworkPose);pendingNetworkPose=null;}
   $('status').textContent=profile.label+' ready. Follow the mountain trail. F for driver seat.';
- }catch(e){$('status').textContent='Could not load vehicle: '+e.message;$('error').hidden=false;$('error').textContent=$('status').textContent;console.error(e);}
+ }catch(e){if(preparing){for(const part of [preparing.model,...preparing.wheels||[],...preparing.brakes||[]])part?.destroy();preparing.lease.release();}$('status').textContent='Could not load vehicle: '+e.message;$('error').hidden=false;$('error').textContent=$('status').textContent;console.error(e);}
  finally{carLoading=false;picker.update(activeVehicleId,false);$('more-vehicles').disabled=networkLock.vehicle;$('vehicle-toggle').disabled=false;$('vehicle-toggle').textContent='V · '+vehicleProfiles[activeVehicleId].label;}
 }
 
@@ -307,7 +311,7 @@ async function loadCar(id='range-rover',authoritative=false){
 window.playground={app,world,vehicle,chassis,tuning,reset,get modelReady(){return modelReady;},map:testingGround};
 addEventListener('error',e=>{$('error').hidden=false;$('error').textContent='The playground could not start.\n'+e.message;});
 globalThis.offrideLoading?.stage(98,'Preparing your vehicle');selectCamera(0);app.start();await loadCar(activeVehicleId);if(!modelReady)throw Error('Could not prepare the selected vehicle');
-const remoteDrivers=createRemoteDrivers(pc,app,camera,vehicleProfiles,createHelmetDriver);
+const remoteDrivers=createRemoteDrivers(pc,app,camera,vehicleProfiles,createHelmetDriver,vehicleAssets);
 const checkpoint=new pc.Entity('Next race checkpoint');app.root.addChild(checkpoint);checkpoint.enabled=false;
 const checkpointMaterial=material('Race checkpoint',[.12,.65,.48]);checkpointMaterial.emissive=new pc.Color(.08,.4,.22);checkpointMaterial.update();
 for(const x of [-7,7]){const post=new pc.Entity('Checkpoint post');post.addComponent('render',{type:'box',castShadows:false});post.render.material=checkpointMaterial;post.setLocalPosition(x,2.7,0);post.setLocalScale(.18,5.4,.18);checkpoint.addChild(post);}

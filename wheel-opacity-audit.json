@@ -19,8 +19,8 @@
       "materialNames": [
         "mascara negra",
         "wire_000000000",
-        "Borracha 💻.001",
-        "Pintura 💻.003",
+        "Borracha \u00f0\u0178\u2019\u00bb.001",
+        "Pintura \u00f0\u0178\u2019\u00bb.003",
         "Plain unlettered rubber",
         "Plain alloy centre"
       ],
@@ -63,7 +63,8 @@
       ],
       "correctedTransparentMaterials": [],
       "binaryUnchanged": true,
-      "binarySha256": "eaa4d91b7ee3b5ba34a0e779d7d30b6b086107e4b286e14387667a7ef548d475"
+      "binarySha256": "32c91631092f8210e9a079c4090926cc5debb56f7419a09414bed33bc661c805",
+      "geometryChange": "Front emblem indices removed; wheel geometry and texture bytes verified unchanged"
     },
     {
       "id": "gladiator",
