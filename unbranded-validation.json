@@ -106,7 +106,8 @@
       "sourceLogoObjects": 0,
       "plainWheelSidewalls": 12404,
       "plainSteeringHub": true,
-      "additionalHiluxLetters": 233
+      "additionalHiluxLetters": 233,
+      "plainTexturedRegistrationPanels": 1
     },
     {
       "vehicle": "urus",

@@ -8,5 +8,12 @@ assert(reports.find(r=>r.vehicle==='sierra').sourceLogoObjects>0);assert(reports
 writeFileSync('unbranded-validation.json',JSON.stringify({passed:true,vehicles:reports},null,2));console.log({passed:true,vehicles:ids.length,removedDedicatedBadges:true,plainSteeringAndWheelCentres:true,blankSidewalls:true,ramDashboardBlank:true});
 
 for(const id of ['fortuner','g63','sierra'])assert(JSON.parse(readFileSync('assets/'+id+'-corrections.json')).logoFacesRemoved>0);
+// The Hilux registration texture includes manufacturer lettering despite its generic material name.
+const hiluxBytes=readFileSync('assets/hilux.glb');
+const hilux=JSON.parse(hiluxBytes.subarray(20,20+hiluxBytes.readUInt32LE(12)));
+for(const mesh of hilux.meshes)for(const primitive of mesh.primitives){
+  const texture=hilux.materials[primitive.material].pbrMetallicRoughness?.baseColorTexture?.index;
+  if(texture!==undefined)assert(hilux.images[hilux.textures[texture].source].name!=='HILUX_LICENSEPLATE','Hilux registration panels must have no Toyota/Hilux lettering');
+}
 const rims=JSON.parse(readFileSync('assets/fortuner-corrections.json')).rimVertices;for(const key of ['FL','FR','RL','RR'])assert(rims[key]>2700,'rim geometry attached to '+key);
 assert(JSON.parse(readFileSync('assets/vehicle-corrections.json')).matteBlack);
