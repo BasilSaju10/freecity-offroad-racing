@@ -62,7 +62,7 @@ const bodyVisual=new pc.Entity('Vehicle body');app.root.addChild(bodyVisual);
 const driver=createHelmetDriver(pc,app,bodyVisual);
 const suppliedHands=await loadContainer('./assets/hands-on-wheel.glb');for(const a of suppliedHands.resource.materials){const m=a.resource;m.diffuseVertexColor=true;m.diffuse.set(1,1,1);m.update();}driver.attachHands(suppliedHands.resource.instantiateRenderEntity());
 const drivingSoil=createDrivingSoil(pc,app,testingGround,camera);
-const waterSplashes=createWaterSplashes(pc,app,testingGround,camera);
+const waterSplashes=createWaterSplashes(pc,app,testingGround,camera,at=>vehicleAudio.waterEntry(at.strength,at.speed));
 const exhaustSmoke=createExhaustSmoke(pc,app,testingGround,camera,exhaustOutlets);
 const wheelVisuals=[];const rubber=material('Rubber',[.07,.08,.075]),rim=material('Unbranded alloy',[.4,.43,.41],.3,.7);
 for(let i=0;i<4;i++){const pivot=new pc.Entity('Wheel '+i);app.root.addChild(pivot);const tire=new pc.Entity('Tire');tire.addComponent('render',{type:'cylinder'});tire.render.material=rubber;tire.setLocalEulerAngles(0,0,90);tire.setLocalScale(.81,.28,.81);pivot.addChild(tire);const hub=new pc.Entity('Hub');hub.addComponent('render',{type:'cylinder'});hub.render.material=rim;hub.setLocalEulerAngles(0,0,90);hub.setLocalScale(.47,.29,.47);pivot.addChild(hub);wheelVisuals.push(pivot);}
@@ -281,7 +281,7 @@ async function loadCar(id='range-rover',authoritative=false){
    for(const materialAsset of asset.resource.materials){const m=materialAsset.resource;const name=m.name.toLowerCase();m.useDynamicRefraction=false;m.refraction=0;if(profile.twoSidedBody)m.cull=pc.CULLFACE_NONE;m.update();if(isCabinGlass(name)){m.diffuse.set(.55,.68,.78);m.diffuseMap=null;m.opacityMap=null;m.blendType=pc.BLEND_NORMAL;m.opacity=.18;m.depthWrite=false;m.cull=pc.CULLFACE_NONE;m.update();}if(name.includes('bodywork')||name.includes('car_paint')){m.clearCoat=.8;m.clearCoatGloss=.93;m.update();}}
    solidifyWheelSurfaces(pc,model,wheels,brakes);
    if(id==='suv')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/^Detail \d+$/i.test(m.name)){m.diffuse.set(.72,.77,.80);m.metalness=1;m.gloss=.87;m.useMetalness=true;m.update();}if(/bodywork/i.test(m.name)){m.diffuse.set(.009,.011,.013);m.diffuseMap=null;m.metalness=.03;m.gloss=.10;m.clearCoat=0;m.update();}}
-   if(id==='range-rover')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/interior(018|005|010)1Mtl$/i.test(m.name)){m.diffuse.mulScalar(.18);m.diffuseTint=true;m.update();}}
+   if(id==='range-rover')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/interior(018|005|010)1Mtl$/i.test(m.name)){m.diffuse.mulScalar(.18);m.update();}}
    const glassInstances=model.findComponents('render').flatMap(r=>r.meshInstances).filter(mi=>isCabinGlass(mi.material.name));entry={asset,model,wheels,brakes,glassInstances,steering:model.findByName('Steering'),steeringRest:null};drivingSoil.attach(entry,profile,vehicleScale,isCabinGlass);if(storedSoil.has(id))entry.soil.groups.forEach((g,i)=>Object.assign(g.state,storedSoil.get(id)[i]));modelCache.set(id,entry);
   }
   if(activeModel)for(const part of [activeModel.model,...activeModel.wheels,...activeModel.brakes])if(part)part.enabled=false;

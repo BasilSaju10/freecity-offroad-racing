@@ -1,10 +1,11 @@
 // Wheel/water intersection and distance-based emission, independent of rendering.
-export function createWaterSplashState(map,emit){
+export function createWaterSplashState(map,emit,onEntry=()=>{}){
  const wheels=Array.from({length:4},()=>({wet:false,known:false,x:0,z:0,drops:0,foam:0,sheet:0}));
  let current=null;
  function reset(){current=null;for(const w of wheels)Object.assign(w,{wet:false,known:false,drops:0,foam:0,sheet:0});}
  function update(key,vehicle,chassis,tuning,dt){
   if(key!==current){reset();current=key;}
+  const alreadyInWater=wheels.some(w=>w.wet);let entry=null;
   const speed=Math.hypot(chassis.velocity.x,chassis.velocity.z),impact=Math.max(0,-(chassis.velocity.y||0)),q=chassis.quaternion;
   const rightX=1-2*(q.y*q.y+q.z*q.z),rightZ=2*(q.x*q.z-q.y*q.w);
   vehicle.wheelInfos.forEach((wheel,i)=>{
@@ -17,7 +18,7 @@ export function createWaterSplashState(map,emit){
     const immersion=Math.min(1,Math.max(0,(pool.y-p.y+radius)/(radius*.8)));
     const strength=Math.min(1,Math.hypot(speed,impact*1.3)/16)*(.3+.7*immersion),side=i%2?1:-1;
     const at={x:p.x,y:pool.y+.025,z:p.z,vx:chassis.velocity.x,vz:chassis.velocity.z,sx:rightX*side,sz:rightZ*side,speed,strength};
-    if(state.known&&!state.wet&&!jumped){emit('sheet',at);emit('foam',at);for(let j=0;j<4+Math.floor(strength*12);j++)emit('drop',at);}
+    if(state.known&&!state.wet&&!jumped){if(!entry||strength>entry.strength)entry=at;emit('sheet',at);emit('foam',at);for(let j=0;j<4+Math.floor(strength*12);j++)emit('drop',at);}
     state.drops+=dt*Math.min(25,speed*2.2)*(.35+.65*immersion);
     state.foam+=speed*dt/1.8;state.sheet+=dt*Math.min(5,speed*.35)*immersion;
     while(state.drops>=1){emit('drop',at);state.drops--;}
@@ -26,6 +27,7 @@ export function createWaterSplashState(map,emit){
    }else state.drops=state.foam=state.sheet=0;
    state.wet=wet;state.known=true;state.x=p.x;state.z=p.z;
   });
+  if(entry&&!alreadyInWater)onEntry(entry);
  }
  return {update,reset,wheels};
 }

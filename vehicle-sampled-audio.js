@@ -1,5 +1,6 @@
 import {engineLoopConfig} from './engine-loop-config.js';
 import {createDriveSoundSequence} from './drive-sound-sequence.js';
+import {createWaterEntryBuffer} from './water-entry-audio.js';
 export const vehicleSoundFiles={acceleration:'./assets/audio/acceleration-loop.wav',braking:'./assets/audio/braking.mp3',headlights:'./assets/audio/headlight-switch.mp3',shift:'./assets/audio/drive-brake-switch.mp3'};
 export function drivingAudioState({speed=0,throttle=0,brake=false,burnout=false,grounded=false,paused=false}){
  const velocity=Math.abs(speed),gear=Math.min(5,Math.floor(velocity/8));
@@ -7,7 +8,7 @@ export function drivingAudioState({speed=0,throttle=0,brake=false,burnout=false,
 }
 export function driveModeTransition(previous,current){return (previous===1&&current===-1)||(previous===-1&&current===1);}
 export function createVehicleAudio(){
- let context,master,loading,enabled=true,lastHit=-10,lastDirection=null,active=true,acceleration=null,braking=null;
+ let context,master,loading,enabled=true,lastHit=-10,lastWater=-10,lastDirection=null,active=true,acceleration=null,braking=null;
  const buffers={},voices=new Set(),sequence=createDriveSoundSequence(),button=document.getElementById('sound-toggle');
  function noise(seconds){const buffer=context.createBuffer(1,Math.ceil(context.sampleRate*seconds),context.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;return buffer;}
  function play(name,{loop=false,volume=1,rate=1}={}){if(!context||!buffers[name]||!enabled||document.hidden||context.state!=='running')return null;
@@ -36,6 +37,7 @@ export function createVehicleAudio(){
  return {select(){stopDriving();lastDirection=null;sequence.reset();},
  direction(){/* Pedal edges do not change gear before the vehicle stops. */},
  headlights(){if(!enabled||document.hidden)return;unlock().then(()=>{if(active)play('headlights',{volume:.8});});},
+ waterEntry(strength=.3,speed=0){if(!enabled||!active||!context||document.hidden||context.state!=='running'||context.currentTime-lastWater<.65)return;lastWater=context.currentTime;const source=context.createBufferSource(),gain=context.createGain();source.buffer=createWaterEntryBuffer(context);gain.gain.value=.16+Math.min(1,Math.max(0,strength)+Math.abs(speed)/80)*.38;source.connect(gain).connect(master);const voice={source,gain,stopped:false};voices.add(voice);source.start();source.onended=()=>{voices.delete(voice);source.disconnect();gain.disconnect();};},
  thunder(){if(!enabled||!active||!context||document.hidden||context.state!=='running')return;const source=context.createBufferSource(),gain=context.createGain(),filter=context.createBiquadFilter(),time=context.currentTime+.8;source.buffer=noise(3.2);filter.type='lowpass';filter.frequency.value=220;filter.Q.value=.5;gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(.34,time+.12);gain.gain.exponentialRampToValueAtTime(.0001,time+3.1);source.connect(filter).connect(gain).connect(master);const voice={source,gain,stopped:false};voices.add(voice);source.start(time);source.stop(time+3.2);source.onended=()=>{voices.delete(voice);source.disconnect();filter.disconnect();gain.disconnect();};},
  update(input,dt){const state=drivingAudioState(input);active=state.active;if(!context)return;const time=context.currentTime,audible=enabled&&active&&!document.hidden;master.gain.setTargetAtTime(audible ? .65 : 0,time,.04);
   if(!audible){stopDriving();lastDirection=null;sequence.reset();return;}

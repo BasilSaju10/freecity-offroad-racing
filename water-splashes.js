@@ -1,6 +1,6 @@
 import {createWaterSplashState} from './water-splash-state.js';
 
-export function createWaterSplashes(pc,app,map,camera){
+export function createWaterSplashes(pc,app,map,camera,onEntry){
  const root=new pc.Entity('Dynamic water splashes');app.root.addChild(root);
  const canvas=document.createElement('canvas');canvas.width=canvas.height=64;const ctx=canvas.getContext('2d');
  const g=ctx.createRadialGradient(32,32,2,32,32,31);g.addColorStop(0,'rgba(245,253,255,.95)');g.addColorStop(.35,'rgba(194,227,239,.8)');g.addColorStop(1,'rgba(149,204,226,0)');ctx.fillStyle=g;ctx.fillRect(0,0,64,64);
@@ -30,7 +30,7 @@ export function createWaterSplashes(pc,app,map,camera){
    const p=foam[foamIndex++%foam.length];p.life=p.maxLife=.75+a.strength*.65;p.strength=a.strength;p.e.setPosition(a.x,a.y,a.z);p.e.enabled=true;
   }
  }
- const state=createWaterSplashState(map,emit);
+ const state=createWaterSplashState(map,emit,onEntry);
  function reset(){state.reset();for(const p of [...drops,...sheets,...foam]){p.life=0;p.e.enabled=false;}}
  function opacity(p,value){p.e.render.meshInstances[0].setParameter('material_opacity',value);}
  function update(key,vehicle,chassis,tuning,dt){

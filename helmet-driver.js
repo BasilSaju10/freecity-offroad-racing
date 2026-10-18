@@ -49,7 +49,7 @@ export function createHelmetDriver(pc,app,parent){
    for(const arm of arms){
     grip.set(arm.side*radius*.8660254,radius*.5,0);wheelRotation.transformVector(grip,grip);hand.set(...fit.steeringPosition).add(grip).sub(seatOrigin);
     radialRotation.setFromAxisAngle(new pc.Vec3(0,0,1),arm.side<0?150:30);handRotation.mul2(wheelRotation,radialRotation);
-    if(importedHands){wheelRotation.transformVector(new pc.Vec3(arm.side*.172,.088,.12).mulScalar(radius/.20),wrist);wrist.add(new pc.Vec3(...fit.steeringPosition)).sub(seatOrigin);}else{handRotation.transformVector(new pc.Vec3(.025,-arm.side*.055,.075),wrist);wrist.add(hand);}shoulder.set(arm.side*.18,-.20,.055);elbow.lerp(shoulder,wrist,.52);elbow.x+=arm.side*.055;elbow.y-=.105;
+    if(importedHands){handRotation.transformVector(new pc.Vec3(.012,-arm.side*.060,.113).mulScalar(radius/.20),wrist);wrist.add(hand);}else{handRotation.transformVector(new pc.Vec3(.025,-arm.side*.055,.075),wrist);wrist.add(hand);}shoulder.set(arm.side*.18,-.20,.055);elbow.lerp(shoulder,wrist,.52);elbow.x+=arm.side*.055;elbow.y-=.105;
     link(arm.upper,shoulder,elbow,.105);link(arm.lower,elbow,wrist,.08);arm.hand.setLocalPosition(hand);arm.hand.setLocalRotation(handRotation);arm.cuff.setLocalPosition(wrist);arm.cuff.setLocalRotation(handRotation);
    }
   }
