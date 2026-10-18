@@ -16,4 +16,10 @@ for(const mesh of hilux.meshes)for(const primitive of mesh.primitives){
   if(texture!==undefined)assert(hilux.images[hilux.textures[texture].source].name!=='HILUX_LICENSEPLATE','Hilux registration panels must have no Toyota/Hilux lettering');
 }
 const rims=JSON.parse(readFileSync('assets/fortuner-corrections.json')).rimVertices;for(const key of ['FL','FR','RL','RR'])assert(rims[key]>2700,'rim geometry attached to '+key);
+const g63Bytes=readFileSync('assets/g63.glb');
+const g63=JSON.parse(g63Bytes.subarray(20,20+g63Bytes.readUInt32LE(12)));
+for(const mesh of g63.meshes)for(const primitive of mesh.primitives){
+  const texture=g63.materials[primitive.material].pbrMetallicRoughness?.baseColorTexture?.index;
+  if(texture!==undefined)assert(!/ManufacturerPlate/i.test(g63.images[g63.textures[texture].source].name),'G63 registration panel must have no AMG texture');
+}
 assert(JSON.parse(readFileSync('assets/vehicle-corrections.json')).matteBlack);

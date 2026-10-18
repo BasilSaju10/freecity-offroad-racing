@@ -4,5 +4,7 @@
   "removedLetterComponents": 192,
   "sourceLogoObjects": 0,
   "plainWheelSidewalls": 8122,
-  "plainSteeringHub": true
+  "plainSteeringHub": true,
+  "remainingFrontSymbolFacesRemoved": 17,
+  "plainRearRegistrationPanel": true
 }
