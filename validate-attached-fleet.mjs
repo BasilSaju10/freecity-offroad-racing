@@ -1,3 +1,5 @@
+import {createWeightTransfer} from './weight-transfer.js';
+import {createShiftDrift} from './shift-drift.js';
 import {createPivotBurnout} from './pivot-burnout.js';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -11,7 +13,7 @@ import {vehicleIds} from './multiplayer-server.mjs';
 const source=readFileSync(new URL('./main.js',import.meta.url),'utf8');
 const base=new Function(source.slice(source.indexOf('const vehicleProfiles='),source.indexOf('let activeVehicleId='))+'return vehicleProfiles.suv;')();
 const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
-const controls='const pivotBurnout=('+createPivotBurnout.toString()+')(C);'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const controls='const weightTransfer=('+createWeightTransfer.toString()+')(C);const shiftDrift=('+createShiftDrift.toString()+')(C);const pivotBurnout=('+createPivotBurnout.toString()+')(C);'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
 const apply=source.slice(source.indexOf('function applyVehicleProfile('),source.indexOf('async function loadCar('));
 const factory=new Function('C','world','vehicleSpeedLimit','applyBurnoutDrift','createDriveSoundSequence','const testingGround={applyWheelSurface(v,b,t,i){v.wheelInfos[i].frictionSlip=2.5;}};'+setup+`
 const steeringAxis={set(){return this;},normalize(){}};const dashboardDisplay={setLocalPosition(){},setLocalScale(){}};const camPos={y:0};

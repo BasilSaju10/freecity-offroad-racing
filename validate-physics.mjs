@@ -1,3 +1,5 @@
+import {createWeightTransfer} from './weight-transfer.js';
+import {createShiftDrift} from './shift-drift.js';
 import {createPivotBurnout} from './pivot-burnout.js';
 import {vehicleSpeedLimit,enforceVehicleSpeedLimit} from './vehicle-limits.js';
 import {applyBurnoutDrift} from './burnout-drift.js';
@@ -12,7 +14,7 @@ import assert from 'node:assert/strict';
 const source=readFileSync('main.js','utf8'),meta=JSON.parse(readFileSync('assets/map/physics.json'));
 const bytes=readFileSync('assets/map/heights.bin');
 const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
-const controls='const pivotBurnout=('+createPivotBurnout.toString()+')(C);const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const controls='const weightTransfer=('+createWeightTransfer.toString()+')(C);const shiftDrift=('+createShiftDrift.toString()+')(C);const pivotBurnout=('+createPivotBurnout.toString()+')(C);const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
 const factory=new Function('C','world','testingGround','vehicleSpeedLimit','enforceVehicleSpeedLimit','applyBurnoutDrift',setup+`const keys=new Set();let steering=0;const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));${controls};return{keys,chassis,vehicle,tuning,controls,signedSpeed};`);
 function create(mapMode){const world=new C.World({gravity:new C.Vec3(0,-9.81,0)});world.broadphase=createMapBroadphase(C,world);world.solver.iterations=15;world.defaultContactMaterial.friction=.55;world.defaultContactMaterial.restitution=.02;
 let map;if(mapMode)map=createMapPhysics(C,world,meta,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));else {world.addBody(new C.Body({mass:0,shape:new C.Plane(),quaternion:new C.Quaternion().setFromEuler(-Math.PI/2,0,0)}));map={applyWheelSurface(v){for(const w of v.wheelInfos)w.frictionSlip=1.65;}};}

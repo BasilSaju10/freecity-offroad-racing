@@ -20,7 +20,7 @@ export function createWeather(pc,app,camera,sun,map,onThunder){
   for(const key of ['power','reflection','fogStart','fogEnd','rain'])current[key]=blend(current[key],preset[key],mix);
   if(mode!==lastMode){lightningWait=7+Math.random()*8;lastMode=mode;}
   let flash=0;
-  if(mode==='storm'&&!paused){lightningWait-=dt;if(lightningWait<=0){flashAge=0;lightningWait=10+Math.random()*15;onThunder?.();}}
+  if((mode==='rain'||mode==='storm')&&!paused){lightningWait-=dt;if(lightningWait<=0){flashAge=0;lightningWait=10+Math.random()*15;onThunder?.();}}
   flashAge+=dt;
   if(!reducedMotion)flash=Math.exp(-flashAge*14)*.48+Math.exp(-Math.pow((flashAge-.23)/.07,2))*.20;
   color.set(current.sky[0]+flash*.28,current.sky[1]+flash*.30,current.sky[2]+flash*.34);camera.camera.clearColor.copy(color);app.scene.fog.color.copy(color);

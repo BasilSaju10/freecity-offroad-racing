@@ -38,6 +38,7 @@ void getAlbedo(){
 `;
 
 export const mudParticleColor=[.17,.095,.035];
+export const darkMudParticleColor=[.065,.042,.025];
 
 export function createDrivingSoil(pc,app,map,camera){
  const patched=new WeakSet();
@@ -82,19 +83,26 @@ export function createDrivingSoil(pc,app,map,camera){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=64;const ctx=canvas.getContext('2d');
  const gradient=ctx.createRadialGradient(32,32,2,32,32,31);gradient.addColorStop(0,'rgba(255,255,255,.65)');gradient.addColorStop(.4,'rgba(255,255,255,.32)');gradient.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gradient;ctx.fillRect(0,0,64,64);
  const texture=new pc.Texture(app.graphicsDevice,{mipmaps:false});texture.setSource(canvas);
- const dust=new pc.StandardMaterial();dust.name='Airborne trail dust';dust.useLighting=false;dust.diffuse=new pc.Color(0,0,0);dust.emissive=new pc.Color(...mudParticleColor);dust.emissiveMap=texture;dust.opacityMap=texture;dust.opacityMapChannel='a';dust.opacity=.5;dust.blendType=pc.BLEND_NORMAL;dust.depthWrite=false;dust.cull=pc.CULLFACE_NONE;dust.update();
- const clod=new pc.StandardMaterial();clod.name='Wet mud thrown from tyres';clod.diffuse=new pc.Color(...mudParticleColor);clod.gloss=.25;clod.update();
+ function makeDust(name,color){const material=new pc.StandardMaterial();material.name=name;material.useLighting=false;material.diffuse=new pc.Color(0,0,0);material.emissive=new pc.Color(...color);material.emissiveMap=texture;material.opacityMap=texture;material.opacityMapChannel='a';material.opacity=.5;material.blendType=pc.BLEND_NORMAL;material.depthWrite=false;material.cull=pc.CULLFACE_NONE;material.update();return material;}
+ const dust=makeDust('Airborne trail dust',mudParticleColor),darkDust=makeDust('Dark wet dirt spray',darkMudParticleColor);
+ const clod=new pc.StandardMaterial();clod.name='Wet mud thrown from tyres';clod.diffuse=new pc.Color(...darkMudParticleColor);clod.gloss=.25;clod.update();
  const particles=Array.from({length:96},(_,i)=>{const e=new pc.Entity(i<64?'Dust puff':'Mud clod');e.addComponent('render',{type:i<64?'plane':'sphere',castShadows:false,receiveShadows:false});e.render.material=i<64?dust:clod;e.enabled=false;app.root.addChild(e);return {e,dust:i<64,life:0,maxLife:1,size:0,p:new pc.Vec3(),v:new pc.Vec3()};});
  let dustIndex=0,mudIndex=64;
  const tilt=new pc.Quat().setFromEulerAngles(90,0,0),billboard=new pc.Quat();
- function emit(point,velocity,muddy){
-  const p=particles[muddy?(mudIndex=64+(mudIndex-63)%32):(dustIndex=(dustIndex+1)%64)];
-  p.life=p.maxLife=muddy?.55+Math.random()*.4:.65+Math.random()*.65;p.size=muddy?.025+Math.random()*.04:.18+Math.random()*.20;
-  p.p.set(point.x+(Math.random()-.5)*.18,point.y+.07,point.z+(Math.random()-.5)*.18);
-  p.v.set(-velocity.x*.15+(Math.random()-.5)*1.2,muddy?1.5+Math.random()*2:.4+Math.random()*.6,-velocity.z*.15+(Math.random()-.5)*1.2);p.e.enabled=true;
+ const backward=new pc.Vec3();
+ function emit(point,velocity,muddy,agitation,cloud=false){
+  const solid=muddy&&!cloud,p=particles[solid?(mudIndex=64+(mudIndex-63)%32):(dustIndex=(dustIndex+1)%64)];
+  p.muddy=muddy;p.e.render.material=solid?clod:muddy?darkDust:dust;
+  p.life=p.maxLife=solid?.65+Math.random()*.4:muddy?.45+Math.random()*.3:.65+Math.random()*.65;
+  p.size=solid?.045+Math.random()*.045:muddy?.12+Math.random()*.12:.18+Math.random()*.20;
+  p.p.set(point.x+(Math.random()-.5)*.18,point.y+.12,point.z+(Math.random()-.5)*.18);
+  const speed=Math.hypot(velocity.x,velocity.z),kick=muddy?2+Math.min(7,agitation*.45):speed*.15;
+  const bx=speed>.4?-velocity.x/speed:backward.x,bz=speed>.4?-velocity.z/speed:backward.z;
+  p.v.set(bx*kick+(Math.random()-.5)*1.2,solid?1.8+Math.random()*2:muddy?.8+Math.random()*.8:.4+Math.random()*.6,bz*kick+(Math.random()-.5)*1.2);p.e.enabled=true;
  }
  function update(entry,vehicle,chassis,tuning,dt,wheelStates){
   if(!entry?.soil)return;
+  chassis.quaternion.vmult({x:0,y:0,z:1},backward);backward.y=0;backward.normalize();
   const speed=Math.hypot(chassis.velocity.x,chassis.velocity.z),distance=Math.min(speed*dt,2);
   entry.soil.groups.forEach((g,i)=>{
    if(i){const w=vehicle.wheelInfos[i-1];if(w.isInContact){const hit=w.raycastResult.hitPointWorld,surface=map.surfaceAt(hit.x,hit.z);
@@ -103,7 +111,7 @@ export function createDrivingSoil(pc,app,map,camera){
     if(agitation>1&&surface.name!=='WATER CROSSING'){
      const muddy=surface.name==='MUD'||g.state.mud>.3&&g.state.wet>.35;
      g.credit+=dt*Math.min(26,agitation*(muddy?1.7:1.2));
-     while(g.credit>=1){emit(hit,chassis.velocity,muddy);if(muddy&&spinSpeed>speed+2)emit(hit,chassis.velocity,false);g.credit--;}
+     while(g.credit>=1){emit(hit,chassis.velocity,muddy,agitation);if(muddy)emit(hit,chassis.velocity,true,agitation,true);g.credit--;}
     }
    }else advanceSoil(g.state,'',0,dt);
    }else advanceSoil(g.state,map.surfaceInfo(chassis).name,distance*.40*(vehicle.wheelInfos.some(w=>w.isInContact)?1:0),dt);

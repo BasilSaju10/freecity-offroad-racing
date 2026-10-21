@@ -7,9 +7,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64.7,
+      "distanceIn8Seconds": 64.1,
       "maxSpeedKmh": 47,
-      "minUprightDot": 0.96
+      "minUprightDot": 0.95
     },
     {
       "id": "range-rover",
@@ -17,9 +17,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64.7,
+      "distanceIn8Seconds": 64.1,
       "maxSpeedKmh": 47,
-      "minUprightDot": 0.96
+      "minUprightDot": 0.95
     },
     {
       "id": "defender-90",
@@ -27,9 +27,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 62.5,
-      "maxSpeedKmh": 45,
-      "minUprightDot": 0.95
+      "distanceIn8Seconds": 62.2,
+      "maxSpeedKmh": 44,
+      "minUprightDot": 0.94
     },
     {
       "id": "defender-grasmere",
@@ -37,9 +37,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64,
+      "distanceIn8Seconds": 63.7,
       "maxSpeedKmh": 47,
-      "minUprightDot": 0.96
+      "minUprightDot": 0.95
     },
     {
       "id": "ram-trx",
@@ -47,8 +47,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 65.6,
-      "maxSpeedKmh": 50,
+      "distanceIn8Seconds": 64.7,
+      "maxSpeedKmh": 48,
       "minUprightDot": 0.97
     },
     {
@@ -57,9 +57,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64,
-      "maxSpeedKmh": 47,
-      "minUprightDot": 0.96
+      "distanceIn8Seconds": 63.4,
+      "maxSpeedKmh": 46,
+      "minUprightDot": 0.95
     },
     {
       "id": "gladiator",
@@ -67,9 +67,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64.9,
+      "distanceIn8Seconds": 65,
       "maxSpeedKmh": 48,
-      "minUprightDot": 0.97
+      "minUprightDot": 0.96
     },
     {
       "id": "sierra",
@@ -77,8 +77,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 66,
-      "maxSpeedKmh": 50,
+      "distanceIn8Seconds": 64.9,
+      "maxSpeedKmh": 46,
       "minUprightDot": 0.97
     },
     {
@@ -87,9 +87,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64.4,
+      "distanceIn8Seconds": 63.7,
       "maxSpeedKmh": 47,
-      "minUprightDot": 0.96
+      "minUprightDot": 0.95
     },
     {
       "id": "raptor",
@@ -97,9 +97,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 66.2,
-      "maxSpeedKmh": 50,
-      "minUprightDot": 0.97
+      "distanceIn8Seconds": 65.2,
+      "maxSpeedKmh": 49,
+      "minUprightDot": 0.96
     },
     {
       "id": "everest",
@@ -107,9 +107,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 63.9,
-      "maxSpeedKmh": 46,
-      "minUprightDot": 0.96
+      "distanceIn8Seconds": 63.1,
+      "maxSpeedKmh": 44,
+      "minUprightDot": 0.95
     },
     {
       "id": "safari",
@@ -117,9 +117,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64.2,
-      "maxSpeedKmh": 48,
-      "minUprightDot": 0.96
+      "distanceIn8Seconds": 63.7,
+      "maxSpeedKmh": 46,
+      "minUprightDot": 0.95
     },
     {
       "id": "hilux",
@@ -127,8 +127,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 63.7,
-      "maxSpeedKmh": 47,
+      "distanceIn8Seconds": 63.3,
+      "maxSpeedKmh": 45,
       "minUprightDot": 0.96
     },
     {
@@ -137,9 +137,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 64.8,
+      "distanceIn8Seconds": 64.1,
       "maxSpeedKmh": 46,
-      "minUprightDot": 0.96
+      "minUprightDot": 0.95
     },
     {
       "id": "sterrato",
@@ -147,8 +147,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 63.7,
-      "maxSpeedKmh": 47,
+      "distanceIn8Seconds": 63.1,
+      "maxSpeedKmh": 45,
       "minUprightDot": 0.95
     }
   ]

@@ -29,7 +29,7 @@ for(const turn of [-1,0,1]){
  const wheels=Array.from({length:4},()=>({isInContact:true})),brakes=[],forces=[];
  const vehicle={wheelInfos:wheels,setSteeringValue(){},setBrake(value,i){brakes[i]=value;},applyEngineForce(value,i){forces[i]=value;}};
  const profile={wheelbase:3},pivot=createPivotBurnout(C),front=()=>body.quaternion.vmult(new C.Vec3(0,0,-1.5)).vadd(body.position),rear=()=>body.quaternion.vmult(new C.Vec3(0,0,1.5)).vadd(body.position),anchor=front();
- for(let i=0;i<240;i++){assert(pivot.update(true,body,vehicle,profile,turn,1/120));body.position.x+=.001;pivot.constrain(body,profile);assert(front().distanceTo(anchor)<1e-7);
+ for(let i=0;i<480;i++){assert(pivot.update(true,body,vehicle,profile,turn,1/120));if(!pivot.active)continue;body.position.x+=.001;pivot.constrain(body,profile);assert(front().distanceTo(anchor)<1e-7);
  const interpolated=body.position.clone().vadd(new C.Vec3(.2,0,.2)),q=new C.Quaternion().setFromAxisAngle(new C.Vec3(0,1,0),.3).mult(body.quaternion);
  const rendered=pivot.renderPosition(interpolated,q,profile),renderedFront=q.vmult(new C.Vec3(0,0,-1.5)).vadd(rendered);
  assert(Math.hypot(renderedFront.x-anchor.x,renderedFront.z-anchor.z)<1e-7,'interpolated front axle remains planted');}

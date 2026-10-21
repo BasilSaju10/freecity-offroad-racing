@@ -1,8 +1,10 @@
+import {createWeightTransfer} from './weight-transfer.js';
+import {createShiftDrift} from './shift-drift.js';
 import {createPivotBurnout} from './pivot-burnout.js';
 import {vehicleSpeedLimit,enforceVehicleSpeedLimit} from './vehicle-limits.js';
 import {applyBurnoutDrift} from './burnout-drift.js';
 import {createDriveSoundSequence} from './drive-sound-sequence.js';
-import {createDrivingSoil,mudParticleColor} from './driving-soil.js';
+import {createDrivingSoil,mudParticleColor,darkMudParticleColor} from './driving-soil.js';
 import {Mat4} from './vendor/playcanvas/core/math/mat4.js';
 import * as C from './vendor/cannon-es.js';
 import {Quat} from './vendor/playcanvas/core/math/quat.js';
@@ -11,23 +13,23 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const source=readFileSync(new URL('./main.js',import.meta.url),'utf8');
 const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
-const controls='const pivotBurnout=('+createPivotBurnout.toString()+')(C);const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const controls='const weightTransfer=('+createWeightTransfer.toString()+')(C);const shiftDrift=('+createShiftDrift.toString()+')(C);const pivotBurnout=('+createPivotBurnout.toString()+')(C);const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
 const rendering=source.slice(source.indexOf('// Capture suspension'),source.indexOf('function updateCamera'));
 class Visual{p=new Vec3();q=new Quat();setPosition(...a){this.p.copy(a[0] instanceof Vec3?a[0]:new Vec3(...a));}setRotation(q){this.q.copy(q);}getPosition(){return this.p;}}
 const factory=new Function('C','pc','world','Visual','vehicleSpeedLimit','enforceVehicleSpeedLimit','applyBurnoutDrift',`const testingGround={applyWheelSurface(v,b,t,i,h){v.wheelInfos[i].frictionSlip=h?1:2.5;}};`+setup+`const keys=new Set();let steering=0;const steeringVisual=null;const bodyVisual=new Visual();const wheelVisuals=Array.from({length:4},()=>new Visual()),loadedWheels=Array.from({length:4},()=>new Visual()),loadedBrakes=Array.from({length:4},()=>new Visual());const wheelState=vehicle.wheelInfos.map(()=>({previousLength:tuning.restLength,length:tuning.restLength,previousSpin:0,spin:0,previousSteer:0,steer:0}));const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));${controls}${rendering};return {keys,chassis,vehicle,wheelState,sync,loadedWheels,loadedBrakes};`);
 
-const world=new C.World({gravity:new C.Vec3(0,-9.81,0)});const ground=new C.Body({mass:0,shape:new C.Plane(),quaternion:new C.Quaternion().setFromEuler(-Math.PI/2,0,0)});world.addBody(ground);const r=factory(C,{Quat,Vec3},world,Visual,vehicleSpeedLimit,enforceVehicleSpeedLimit,applyBurnoutDrift);r.chassis.position.set(0,.542,0);const step=seconds=>{for(let i=0;i<seconds*120;i++){world.step(1/120);r.sync();}};step(2);r.keys.add('Space');r.keys.add('KeyW');step(2);
+const world=new C.World({gravity:new C.Vec3(0,-9.81,0)});const ground=new C.Body({mass:0,shape:new C.Plane(),quaternion:new C.Quaternion().setFromEuler(-Math.PI/2,0,0)});world.addBody(ground);const r=factory(C,{Quat,Vec3},world,Visual,vehicleSpeedLimit,enforceVehicleSpeedLimit,applyBurnoutDrift);r.chassis.position.set(0,.542,0);const step=seconds=>{for(let i=0;i<seconds*120;i++){world.step(1/120);r.sync();}};step(2);r.keys.add('Space');r.keys.add('KeyW');step(4);
 assert(Math.abs(r.wheelState[2].spin)>40&&Math.abs(r.wheelState[3].spin)>40,'both rear wheels spin');assert(Math.abs(r.wheelState[0].spin)<1&&Math.abs(r.wheelState[1].spin)<1,'front wheels hold the car');assert(Math.hypot(r.chassis.velocity.x,r.chassis.velocity.z)<1,'stationary burnout');assert(r.vehicle.wheelInfos[0].brake>0&&r.vehicle.wheelInfos[2].brake===0);assert(r.vehicle.wheelInfos[0].engineForce===0&&r.vehicle.wheelInfos[2].engineForce>0);
 class Entity extends Visual{constructor(name){super();this.name=name;this.children=[];this.enabled=true;}addChild(e){e.parent=this;this.children.push(e);}addComponent(t,o){this[t]={...o,meshInstances:[{setParameter(){}}]};}findComponents(){return [];}getWorldTransform(){return new Mat4();}setLocalScale(){}setLocalEulerAngles(){}}
 const context={createRadialGradient:()=>({addColorStop(){}}),fillRect(){}};globalThis.document={createElement:()=>({getContext:()=>context})};const pc={Entity,Vec3,Quat,Mat4,StandardMaterial:class{update(){}},Color:class{constructor(...v){this.values=v;}},Texture:class{setSource(){}},BLEND_NORMAL:2,CULLFACE_NONE:0};
 const root=new Entity('Scene'),model=new Entity('Car'),wheels=Array.from({length:4},()=>new Entity('Wheel'));root.addChild(model);const map={surfaceAt:()=>({name:'DIRT TRAIL'}),surfaceInfo:()=>({name:'DIRT TRAIL'}),heightAt:()=>0},soil=createDrivingSoil(pc,{root,graphicsDevice:{}},map,{getRotation:()=>new Quat()}),entry={model,wheels};soil.attach(entry,{radius:r.vehicle.wheelInfos[0].radius},1,()=>false);for(let i=0;i<60;i++)soil.update(entry,r.vehicle,r.chassis,{radius:r.vehicle.wheelInfos[0].radius},1/60,r.wheelState);
-assert(soil.particles.filter(p=>p.life>0&&p.dust).length>10,'rear slip throws dust while stationary');assert.deepEqual(soil.particles[0].e.render.material.emissive.values,mudParticleColor,'dust matches mud pigment');assert.deepEqual(soil.particles.find(p=>!p.dust).e.render.material.diffuse.values,mudParticleColor);assert.equal(soil.particles.length,96,'bounded dust and mud pool');
+assert(soil.particles.filter(p=>p.life>0&&p.dust).length>10,'rear slip throws dust while stationary');assert.deepEqual(soil.particles[0].e.render.material.emissive.values,mudParticleColor,'dust matches mud pigment');assert.deepEqual(soil.particles.find(p=>!p.dust).e.render.material.diffuse.values,darkMudParticleColor);assert.equal(soil.particles.length,96,'bounded dust and mud pool');
 const angle=r.wheelState[2].spin;r.keys.delete('KeyW');step(.3);assert.equal(r.wheelState[2].spin,angle,'Space alone locks rear wheels');
 // Exercise the real physics and visual sync for both shortcuts and directions.
 const frontPoint=()=>r.chassis.quaternion.vmult(new C.Vec3(0,0,-tuningWheelbase/2)).vadd(r.chassis.position);
 const tuningWheelbase=r.vehicle.wheelInfos[2].chassisConnectionPointLocal.z-r.vehicle.wheelInfos[0].chassisConnectionPointLocal.z;
 for(const accelerator of ['KeyW','KeyQ'])for(const [key,direction] of [['KeyA',-1],['KeyD',1]]){
- r.keys.clear();step(.5);r.keys.add('Space');r.keys.add(accelerator);step(.5);
+ r.keys.clear();step(.5);r.keys.add('Space');r.keys.add(accelerator);step(2.2);
  const anchor=frontPoint(),rearStart=r.chassis.quaternion.vmult(new C.Vec3(0,0,tuningWheelbase/2)).vadd(r.chassis.position),startQ=r.chassis.quaternion.clone();
  const spin0=r.wheelState[0].spin,spin1=r.wheelState[1].spin;
  r.keys.add(key);
@@ -42,4 +44,16 @@ for(const accelerator of ['KeyW','KeyQ'])for(const [key,direction] of [['KeyA',-
  assert(roll0*roll1<0,'front tyres roll naturally in opposite directions around the planted axle');
  r.keys.clear();step(.5);assert(r.vehicle.wheelInfos[2].frictionSlip>1,'rear grip restores after burnout');
 }
+// Moving Shift drift must keep travelling, countersteer, and release cleanly.
+r.keys.clear();r.keys.add('KeyW');step(5);
+assert(r.chassis.velocity.length()*3.6>25,'drift test enters above 25 km/h');
+const qStart=r.chassis.quaternion.clone(),positionStart=r.chassis.position.clone();
+r.keys.add('ShiftLeft');r.keys.add('KeyA');step(1);
+const relative=qStart.conjugate().mult(r.chassis.quaternion),forward=relative.vmult(new C.Vec3(0,0,-1));
+assert(forward.x<-.1,'left drift rotates into left corner');
+assert(r.chassis.position.distanceTo(positionStart)>4,'moving drift does not pin the front axle');
+assert(r.vehicle.wheelInfos[0].steering<0,'front tyres countersteer during sustained left drift');
+assert(r.vehicle.wheelInfos[2].frictionSlip<r.vehicle.wheelInfos[0].frictionSlip,'rear loses grip while front guides');
+r.keys.delete('ShiftLeft');r.keys.delete('KeyA');step(2);
+assert(r.vehicle.wheelInfos[2].frictionSlip>2.4,'normal grip returns after releasing Shift');
 const report={passed:true,directionalDrift:true,rearTyresAndRimsSpin:true,frontWheelsHold:true,dustFromStationarySlip:true,mudColouredDust:true,handbrakeWithoutThrottle:true,particleLimit:96};writeFileSync(new URL('./burnout-validation.json',import.meta.url),JSON.stringify(report,null,2));console.log(report);

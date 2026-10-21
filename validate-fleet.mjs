@@ -1,3 +1,5 @@
+import {createWeightTransfer} from './weight-transfer.js';
+import {createShiftDrift} from './shift-drift.js';
 import {createPivotBurnout} from './pivot-burnout.js';
 import {vehicleSpeedLimit,enforceVehicleSpeedLimit} from './vehicle-limits.js';
 import {applyBurnoutDrift} from './burnout-drift.js';
@@ -12,7 +14,7 @@ import assert from 'node:assert/strict';
 const source=readFileSync('main.js','utf8'),meta=JSON.parse(readFileSync('assets/map/physics.json')),bytes=readFileSync('assets/map/heights.bin');
 const definitions=source.slice(source.indexOf('const vehicleProfiles='),source.indexOf('let activeVehicleId=')),profiles=new Function(definitions+'return vehicleProfiles;')();
 const setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual='));
-const controls='const pivotBurnout=('+createPivotBurnout.toString()+')(C);const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
+const controls='const weightTransfer=('+createWeightTransfer.toString()+')(C);const shiftDrift=('+createShiftDrift.toString()+')(C);const pivotBurnout=('+createPivotBurnout.toString()+')(C);const driveGearSequence=('+createDriveSoundSequence.toString()+')();'+source.slice(source.indexOf('function controls('),source.indexOf('// Capture suspension'));
 const apply=source.slice(source.indexOf('function applyVehicleProfile('),source.indexOf('async function loadCar('));
 const factory=new Function('C','world','testingGround','vehicleSpeedLimit','enforceVehicleSpeedLimit','applyBurnoutDrift',setup+`const wheelState=[];const keys=new Set();let steering=0;const steeringAxis={set(){return this;},normalize(){}};const dashboardDisplay={setLocalPosition(){},setLocalScale(){}};function reset(){};const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));${controls}${apply};return{keys,chassis,vehicle,tuning,controls,signedSpeed,applyVehicleProfile};`);
 const reports=[];
