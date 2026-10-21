@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://awd-offroad.onrender.com/sitemap.xml
+Sitemap: https://offride.vercel.app/sitemap.xml
