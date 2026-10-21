@@ -18,7 +18,7 @@ export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onP
     if(response.status!==206||response.headers.get('Content-Range')!==`bytes ${start}-${end}/${file.bytes}`)throw Error('Invalid partial download');
     const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length!==end-start+1)throw Error('Incomplete download segment');
     return {bytes,headers:response.headers};
-   }catch(cause){error=cause;if(attempt<3)await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));}
+   }catch(cause){console.warn('OFFRIDE download segment',file.path,start,cause.stack||String(cause));error=cause;if(attempt<3)await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));}
    throw error;
   }
   const first=await segment(0);if(first.response)return first.response;
@@ -66,7 +66,7 @@ export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onP
     stats.memoryFiles=memory.size;
     if(count!==file.bytes){await cache?.delete(absolute(file));memory.delete(file.path);throw Error('Incomplete download: '+file.path);}
     stats.downloads++;ready.add(file.path);progress(file,file.bytes);return;
-   }catch(error){lastError=Error(file.path+': '+error.message,{cause:error});progress(file,0);}
+   }catch(error){console.warn('OFFRIDE download transfer',file.path,error.stack||String(error));lastError=Error(file.path+': '+error.message,{cause:error});progress(file,0);}
   }
   throw lastError||Error('Could not store download: '+file.path);
  }
