@@ -23,5 +23,23 @@ const context={createRadialGradient:()=>({addColorStop(){}}),fillRect(){}};globa
 const root=new Entity('Scene'),model=new Entity('Car'),wheels=Array.from({length:4},()=>new Entity('Wheel'));root.addChild(model);const map={surfaceAt:()=>({name:'DIRT TRAIL'}),surfaceInfo:()=>({name:'DIRT TRAIL'}),heightAt:()=>0},soil=createDrivingSoil(pc,{root,graphicsDevice:{}},map,{getRotation:()=>new Quat()}),entry={model,wheels};soil.attach(entry,{radius:r.vehicle.wheelInfos[0].radius},1,()=>false);for(let i=0;i<60;i++)soil.update(entry,r.vehicle,r.chassis,{radius:r.vehicle.wheelInfos[0].radius},1/60,r.wheelState);
 assert(soil.particles.filter(p=>p.life>0&&p.dust).length>10,'rear slip throws dust while stationary');assert.deepEqual(soil.particles[0].e.render.material.emissive.values,mudParticleColor,'dust matches mud pigment');assert.deepEqual(soil.particles.find(p=>!p.dust).e.render.material.diffuse.values,mudParticleColor);assert.equal(soil.particles.length,96,'bounded dust and mud pool');
 const angle=r.wheelState[2].spin;r.keys.delete('KeyW');step(.3);assert.equal(r.wheelState[2].spin,angle,'Space alone locks rear wheels');
-const driftStart=r.chassis.position.clone();r.keys.add('KeyW');r.keys.add('KeyA');step(1);assert(r.chassis.position.x<driftStart.x-.5,'A slides left during burnout');assert(r.chassis.angularVelocity.y>.5,'A rotates into left drift');r.keys.delete('KeyA');r.keys.add('KeyD');step(1);assert(r.chassis.angularVelocity.y<-.5,'D rotates into right drift');r.keys.clear();step(.5);assert(r.vehicle.wheelInfos[2].frictionSlip>1,'rear grip restores after burnout');
+// Exercise the real physics and visual sync for both shortcuts and directions.
+const frontPoint=()=>r.chassis.quaternion.vmult(new C.Vec3(0,0,-tuningWheelbase/2)).vadd(r.chassis.position);
+const tuningWheelbase=r.vehicle.wheelInfos[2].chassisConnectionPointLocal.z-r.vehicle.wheelInfos[0].chassisConnectionPointLocal.z;
+for(const accelerator of ['KeyW','KeyQ'])for(const [key,direction] of [['KeyA',-1],['KeyD',1]]){
+ r.keys.clear();step(.5);r.keys.add('Space');r.keys.add(accelerator);step(.5);
+ const anchor=frontPoint(),rearStart=r.chassis.quaternion.vmult(new C.Vec3(0,0,tuningWheelbase/2)).vadd(r.chassis.position),startQ=r.chassis.quaternion.clone();
+ const spin0=r.wheelState[0].spin,spin1=r.wheelState[1].spin;
+ r.keys.add(key);
+ for(let i=0;i<120;i++){
+  world.step(1/120);r.sync();const front=frontPoint();assert(Math.hypot(front.x-anchor.x,front.z-anchor.z)<1e-6,'front axle does not drift');
+  const q=r.chassis.interpolatedQuaternion,visual=r.loadedWheels[0];
+  assert(Number.isFinite(visual.p.x)&&Number.isFinite(visual.p.z),'wheel rendering stays finite');
+ }
+ const rear=r.chassis.quaternion.vmult(new C.Vec3(0,0,tuningWheelbase/2)).vadd(r.chassis.position),delta=startQ.conjugate().vmult(rear.vsub(rearStart));
+ assert(delta.x*direction>.4,key+' swings only the rear in the requested direction');
+ const roll0=r.wheelState[0].spin-spin0,roll1=r.wheelState[1].spin-spin1;
+ assert(roll0*roll1<0,'front tyres roll naturally in opposite directions around the planted axle');
+ r.keys.clear();step(.5);assert(r.vehicle.wheelInfos[2].frictionSlip>1,'rear grip restores after burnout');
+}
 const report={passed:true,directionalDrift:true,rearTyresAndRimsSpin:true,frontWheelsHold:true,dustFromStationarySlip:true,mudColouredDust:true,handbrakeWithoutThrottle:true,particleLimit:96};writeFileSync(new URL('./burnout-validation.json',import.meta.url),JSON.stringify(report,null,2));console.log(report);
