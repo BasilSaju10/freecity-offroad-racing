@@ -42,7 +42,7 @@ export function createHelmetDriver(pc,app,parent){
  return{root,head,seatOrigin,
   attachHands(model){importedHands=model;model.name='Supplied hands on steering wheel';const handSkin=mat('Supplied hands skin tone',[.68,.40,.25],.75);for(const render of model.findComponents?.('render')||[])for(const mi of render.meshInstances)mi.material=handSkin;parent.addChild(model);for(const arm of arms){arm.hand.enabled=false;arm.cuff.enabled=false;}},
   fit(profile,scale){fit=profile;fitScale=scale;seatOrigin.set(profile.steeringPosition[0],Math.min(profile.cockpitEye[1]-.10,(profile.hullTop||1.3)-.22),Math.max(profile.cockpitEye[2]-.05,profile.steeringPosition[2]+.20));root.setLocalScale(scale,scale,scale);root.setLocalPosition(seatOrigin.x*scale,seatOrigin.y*scale,seatOrigin.z*scale);},
-  update(steering,view){if(!fit)return;head.enabled=view!==2;axis.set(...(fit.steeringAxis||[0,.445,.895])).normalize();steeringRotation.setFromAxisAngle(axis,steering*14*180/Math.PI);
+  update(steering,view){if(!fit)return;if(importedHands)importedHands.enabled=!fit.bike;if(fit.bike)return;head.enabled=view!==2;axis.set(...(fit.steeringAxis||[0,.445,.895])).normalize();steeringRotation.setFromAxisAngle(axis,steering*14*180/Math.PI);
    handBasis.setFromDirections(new pc.Vec3(0,0,1),axis);wheelRotation.mul2(steeringRotation,handBasis);
    const radius=(fit.steeringGripRadius||.165)+.012;
    if(importedHands){importedHands.setLocalPosition(...fit.steeringPosition.map(v=>v*fitScale));importedHands.setLocalRotation(wheelRotation);const scale=radius/.20*fitScale;importedHands.setLocalScale(scale,scale,scale);}

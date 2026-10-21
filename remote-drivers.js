@@ -1,9 +1,12 @@
-export function createRemoteDrivers(pc,app,camera,profiles,createDriver,vehicleAssets){
+import {createBikeRider} from './bike-rider.js';
+import {updateBikeSuspension} from './bike-suspension.js';
+export function createRemoteDrivers(pc,app,camera,profiles,createDriver,vehicleAssets,map){
  const root=new pc.Entity('Other drivers');app.root.addChild(root);const cars=new Map();let wanted=new Set();
  const labels=document.createElement('div');labels.id='remote-driver-labels';document.body.append(labels);
  const bodyMat=new pc.StandardMaterial();bodyMat.diffuse=new pc.Color(.28,.48,.42);bodyMat.update();const tyreMat=new pc.StandardMaterial();tyreMat.diffuse=new pc.Color(.06,.06,.06);tyreMat.update();
  function release(car){
   car.revision=(car.revision||0)+1;car.pending?.lease.release();car.pending=null;
+  car.rider?.destroy();car.rider=null;car.riderLease?.release();car.riderLease=null;
   car.model?.destroy();car.driver?.root.destroy();for(const w of [...car.wheels||[],...car.brakes||[]])w?.destroy();
   car.lease?.release();car.lease=null;car.model=null;car.wheels=null;car.brakes=null;car.driver=null;car.wheel=null;car.proxy.enabled=true;
  }
@@ -15,10 +18,11 @@ export function createRemoteDrivers(pc,app,camera,profiles,createDriver,vehicleA
    const asset=await lease.promise;if(!current())return;
    const model=asset.resource.instantiateRenderEntity(),profile=profiles[id];model.setLocalScale(1.12,1.12,1.12);car.entity.addChild(model);car.model=model;car.lease=lease;
    for(const a of asset.resource.materials){const m=a.resource;m.useDynamicRefraction=false;m.refraction=0;m.cull=pc.CULLFACE_NONE;if(/glass|vitre/i.test(m.name)){m.blendType=pc.BLEND_NORMAL;m.opacity=.18;m.depthWrite=false;}m.update();}
-   car.wheels=['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR'].map(name=>model.findByName(name));for(const w of car.wheels)if(w){w.reparent(car.entity);w.setLocalScale(1.12,1.12,1.12);}
-   car.brakes=['Brake_FL','Brake_FR','Brake_RL','Brake_RR'].map(name=>model.findByName(name));for(const w of car.brakes)if(w){w.reparent(car.entity);w.setLocalScale(1.12,1.12,1.12);}
-   car.wheel=model.findByName('Steering');if(car.wheel){car.wheel.setLocalPosition(...profile.steeringPosition);car.rest=car.wheel.getLocalRotation().clone();}
-   car.driver=createDriver(pc,app,car.entity);car.driver.fit(profile,1.12);car.proxy.enabled=false;
+   car.wheels=(profile.bike?['Wheel_F','Wheel_R']:['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR']).map(name=>model.findByName(name));for(const w of car.wheels)if(w){w.reparent(car.entity);w.setLocalScale(1.12,1.12,1.12);}
+   car.brakes=(profile.bike?['Brake_F','Brake_R']:['Brake_FL','Brake_FR','Brake_RL','Brake_RR']).map(name=>model.findByName(name));for(const w of car.brakes)if(w){w.reparent(car.entity);w.setLocalScale(1.12,1.12,1.12);}
+   car.wheel=model.findByName(profile.bike?'Handlebars':'Steering');if(car.wheel){if(!profile.bike)car.wheel.setLocalPosition(...profile.steeringPosition);car.rest=car.wheel.getLocalRotation().clone();}
+   if(profile.bike){car.riderLease=vehicleAssets.acquire('./assets/bike-rider.glb');const riderAsset=await car.riderLease.promise;if(!current())return;car.rider=createBikeRider(pc,riderAsset.resource.instantiateRenderEntity(),car.entity,profile,1.12,map);}
+   else{car.driver=createDriver(pc,app,car.entity);car.driver.fit(profile,1.12);}car.proxy.enabled=false;
   }catch(e){if(current()){release(car);car.retryAt=Date.now()+5000;console.warn('Vehicle preview unavailable:',id,e);}}
   finally{if(car.pending===job)car.pending=null;if(car.lease!==lease)lease.release();}
  }
@@ -33,8 +37,9 @@ export function createRemoteDrivers(pc,app,camera,profiles,createDriver,vehicleA
   for(const car of cars.values()){
    if(!car.target)continue;if(wanted.has(car.id))upgrade(car);else if(car.model){release(car);car.proxy.enabled=true;}
    const s=car.target,target=new pc.Vec3(...s.p),q=new pc.Quat(...s.q),alpha=car.initial||car.position.distance(target)>12?1:1-Math.exp(-dt*14);car.position.lerp(car.position,target,alpha);car.rotation.slerp(car.rotation,q,alpha);car.initial=false;car.entity.setPosition(car.position);car.entity.setRotation(car.rotation);
-   const profile=profiles[car.vehicle];if(car.wheels&&profile){for(let i=0;i<4;i++){const w=s.w[i],x=(i%2?1:-1)*profile.track*.56,z=(i<2?-1:1)*profile.wheelbase*.56;wheelQ.setFromAxisAngle(pc.Vec3.UP,w[2]*180/Math.PI);if(car.brakes[i]){car.brakes[i].setLocalPosition(x,.12*1.12-w[0],z);car.brakes[i].setLocalRotation(wheelQ);}spinQ.setFromAxisAngle(pc.Vec3.RIGHT,w[1]*180/Math.PI);wheelQ.mul(spinQ);if(car.wheels[i]){car.wheels[i].setLocalPosition(x,.12*1.12-w[0],z);car.wheels[i].setLocalRotation(wheelQ);}}
-    if(car.wheel){wheelQ.setFromAxisAngle(new pc.Vec3(...profile.steeringAxis).normalize(),s.steer*14*180/Math.PI);wheelQ.mul(car.rest);car.wheel.setLocalRotation(wheelQ);}car.driver.update(s.steer,0);
+   const profile=profiles[car.vehicle];if(car.wheels&&profile){for(let i=0;i<car.wheels.length;i++){const w=s.w[i]||[.36,0,0],x=profile.bike?0:(i%2?1:-1)*profile.track*.56,z=(profile.bike?i===0:i<2)?-profile.wheelbase*.56:profile.wheelbase*.56;wheelQ.setFromAxisAngle(pc.Vec3.UP,w[2]*180/Math.PI);if(car.brakes[i]){car.brakes[i].setLocalPosition(x,.12*1.12-w[0],z);car.brakes[i].setLocalRotation(wheelQ);}spinQ.setFromAxisAngle(pc.Vec3.RIGHT,w[1]*180/Math.PI);wheelQ.mul(spinQ);if(car.wheels[i]){car.wheels[i].setLocalPosition(x,.12*1.12-w[0],z);car.wheels[i].setLocalRotation(wheelQ);}}
+    if(car.wheel){wheelQ.setFromAxisAngle(profile.bike?pc.Vec3.UP:new pc.Vec3(...profile.steeringAxis).normalize(),s.steer*(profile.bike?1:14)*180/Math.PI);wheelQ.mul(car.rest);car.wheel.setLocalRotation(wheelQ);}car.driver?.update(s.steer,0);
+    if(car.rider){car.rider.update({speed:s.speed,steer:s.steer,reverse:s.speed<-.1,grounded:true,dt,view:0});updateBikeSuspension(car.model,profile,1.12,s.w.slice(0,2).map(w=>w[0]),s.steer);}
    }
    point.copy(car.position);point.y+=2.2;delta.sub2(point,camera.getPosition());camera.camera.worldToScreen(point,screen);const visible=car.entity.enabled&&delta.dot(camera.forward)>0&&delta.length()<180;car.label.hidden=!visible;if(visible){car.label.style.transform=`translate(${screen.x}px,${screen.y}px) translate(-50%,-100%)`;}
   }

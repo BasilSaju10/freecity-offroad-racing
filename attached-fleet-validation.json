@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "vehicles": {
+    "trail-hauler": {
+      "limit": 70,
+      "topSpeedKmh": 69.4,
+      "fourWheelsGrounded": true
+    },
+    "desert-patrol": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "rock-buggy": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "trail-scout": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "gortuner-classic": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "summit-coupe": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "rock-ranger": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "expedition-hauler": {
+      "limit": 70,
+      "topSpeedKmh": 69.4,
+      "fourWheelsGrounded": true
+    },
+    "obsidian-4x4": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    },
+    "trail-mini": {
+      "limit": 80,
+      "topSpeedKmh": 79.1,
+      "fourWheelsGrounded": true
+    }
+  },
+  "motorcycleLimit": 90
+}

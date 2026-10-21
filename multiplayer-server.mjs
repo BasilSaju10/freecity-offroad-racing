@@ -1,7 +1,7 @@
 import {randomBytes,randomUUID} from 'node:crypto';
 import {WebSocketServer,WebSocket} from 'ws';
 
-export const vehicleIds=['suv','range-rover','defender-90','defender-grasmere','ram-trx','fortuner','gladiator','sierra','g63','raptor','everest','safari','hilux','urus','sterrato'];
+export const vehicleIds=['suv','range-rover','defender-90','defender-grasmere','ram-trx','fortuner','gladiator','sierra','g63','raptor','everest','safari','hilux','urus','sterrato','africa-twin','stark-varg','trail-hauler','desert-patrol','rock-buggy','trail-scout','gortuner-classic','summit-coupe','rock-ranger','expedition-hauler','obsidian-4x4','trail-mini'];
 const safeName=v=>String(v||'Driver').replace(/[\p{C}<>]/gu,'').trim().slice(0,24)||'Driver';
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2]);
 // Resample a continuous section of the existing trail: gates never jump between roads.

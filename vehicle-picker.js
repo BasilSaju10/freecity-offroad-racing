@@ -13,6 +13,6 @@ export function createVehiclePicker(profiles,select,onOpenChange){
  return{update(active,loading,pending){
   for(const [id,button] of buttons){button.disabled=loading;button.setAttribute('aria-current',String(id===active));button.lastElementChild.textContent=loading&&id===pending?'LOADING…':id===active?'DRIVING':'SELECT';}
   trigger.disabled=loading;trigger.setAttribute('aria-busy',String(loading));trigger.firstChild.textContent=loading?'Loading vehicle… ':'More vehicles ';
-  status.textContent=loading?'Preparing your vehicle…':'All-wheel drive · Shared SUV physics';
+  status.textContent=loading?'Preparing your vehicle…':`${Object.values(profiles).filter(p=>!p.bike).length} vehicles · ${Object.values(profiles).filter(p=>p.bike).length} bikes · Independent suspension`;
  }};
 }

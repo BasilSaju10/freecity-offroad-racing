@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "directionalDrift": true,
   "rearTyresAndRimsSpin": true,
   "frontWheelsHold": true,
   "dustFromStationarySlip": true,

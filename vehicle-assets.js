@@ -11,7 +11,7 @@ export function createVehicleAssets(pc,app){
   const url=globalThis.offrideAssets?.url(path)||path;
   let entry=entries.get(url);
   if(!entry){
-   const asset=new pc.Asset('Shared vehicle '+path,'container',{url});
+   const asset=new pc.Asset('Shared vehicle '+path,'container',{url,filename:path});
    entry={url,asset,users:0,loading:true};entries.set(url,entry);app.assets.add(asset);
    entry.promise=new Promise((resolve,reject)=>{
     const loaded=()=>{asset.off('error',failed);entry.loading=false;resolve(asset);dispose(entry);};
