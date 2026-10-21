@@ -16,7 +16,7 @@ export const server=createServer(async(req,res)=>{try{
  const indexingFiles={'/robots.txt':'text/plain; charset=utf-8','/sitemap.xml':'application/xml; charset=utf-8'};
  if(indexingFiles[url.pathname]){const content=await readFile(new URL('.'+url.pathname,import.meta.url));res.writeHead(200,{'Content-Type':indexingFiles[url.pathname],'Content-Length':content.length,'Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:content);return;}
  let name=decodeURIComponent(url.pathname);if(name==='/')name='/index.html';let path=resolve(root,'.'+name);const rel=relative(root,path);
- if(process.env.OFFRIDE_LOCAL_ONLY==='1'&&name==='/boot.js'){const boot='window.offridePrivatePreview=true;\n'+await readFile(new URL('./boot.js',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(boot);return;}
+ if((process.env.OFFRIDE_LOCAL_ONLY==='1'||process.env.VERCEL==='1')&&name==='/boot.js'){const boot=(process.env.VERCEL==='1'?'window.offrideSinglePlayer=true;\n':'window.offridePrivatePreview=true;\n')+await readFile(new URL('./boot.js',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});res.end(boot);return;}
  if(!path.startsWith(resolve(root)+sep)||rel.split(/[\\/]/).some(p=>p.startsWith('.'))||/node_modules|editable\.blend/i.test(rel)||!Object.keys(types).includes(extname(path))){res.writeHead(404);res.end('Not found');return;}
  const canonical=await realpath(path);if(!canonical.startsWith(resolve(root)+sep))throw Error('Outside public root');let info=await stat(path);if(!info.isFile())throw Error('Not a file');
  const asset=assets.get(rel.replaceAll('\\','/')),versioned=asset&&url.searchParams.get('v')===asset.hash,etag='"'+(asset?.hash||info.size+'-'+Math.floor(info.mtimeMs))+'"';
@@ -26,7 +26,7 @@ export const server=createServer(async(req,res)=>{try{
  headers['Content-Length']=info.size;res.writeHead(200,headers);
  if(req.method==='HEAD')res.end();else{const stream=createReadStream(path);stream.on('error',()=>res.destroy());stream.pipe(res);}
  }catch{if(!res.headersSent)res.writeHead(404);res.end('Not found');}});
-export const multiplayer=attachMultiplayer(server,meta);
+export const multiplayer=process.env.VERCEL==='1'?{close(){}}:attachMultiplayer(server,meta);
 export default server;
 const port=Number(process.env.PORT||5173);if(process.env.VERCEL!=='1')server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log(`OFFRIDE multiplayer ready on port ${port}`));
 let stopping=false;function shutdown(){if(stopping)return;stopping=true;multiplayer.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(0),8000).unref();}process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
