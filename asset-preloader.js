@@ -2,7 +2,7 @@ import {assetPath} from './asset-plan.js';
 
 export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onProgress=()=>{}}){
  const byPath=new Map(files.map(f=>[f.path,f])),ready=new Set(),pending=new Map(),memory=new Map(),received=new Map();
- const stats={downloads:0,cacheHits:0,memoryFiles:0,networkBytes:0};let writable=!!cache,streamWrites=true;
+ const stats={downloads:0,cacheHits:0,memoryFiles:0,networkBytes:0};let writable=!!cache;
  const absolute=file=>new URL(file.url,baseUrl).href;
  const networkUrl=file=>{const url=new URL(absolute(file));url.searchParams.set('offride-download','1');return url.href;};
  async function request(file){
@@ -42,27 +42,18 @@ export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onP
     const response=await request(file);if(!response.ok)throw Error(`${file.path}: HTTP ${response.status}`);
     const headers=new Headers(response.headers);headers.delete('Content-Encoding');headers.set('Content-Length',String(file.bytes));headers.set('X-Offride-Bytes',String(file.bytes));
     const stream=response.body.pipeThrough(new TransformStream({transform(chunk,controller){count+=chunk.byteLength;stats.networkBytes+=chunk.byteLength;if(count>file.bytes)throw Error('Unexpected download size: '+file.path);progress(file,count);controller.enqueue(chunk);}}));
-    const stored=new Response(stream,{headers});let blob;
+    // Buffer in JS memory first. Chromium can fail a streamed Blob/Cache.put
+    // when disk-backed blob storage is unavailable, even after a good download.
+    const buffer=await new Response(stream).arrayBuffer();
+    if(buffer.byteLength!==file.bytes)throw Error('Incomplete download: '+file.path);
+    const blob=new Blob([buffer],{type:headers.get('Content-Type')||'application/octet-stream'});
     if(writable){
-     if(streamWrites){
-      // Some embedded browsers reject streaming Cache.put responses. A clone
-      // preserves the completed bytes for a buffered write without fetching twice.
-      const backup=stored.clone();
-      try{await cache.put(absolute(file),stored);await backup.body.cancel();}
-      catch(error){
-       blob=await backup.blob();await stored.body.cancel().catch(()=>{});
-       if(blob.size!==file.bytes)throw Error('Incomplete download: '+file.path);
-       streamWrites=false;
-       if(/quota|storage|disk|security/i.test(error.name+' '+error.message)){writable=false;memory.set(file.path,{blob});}
-       else{try{await cache.put(absolute(file),new Response(blob,{headers}));}catch{writable=false;memory.set(file.path,{blob});}}
-      }
-     }else{
-      blob=await stored.blob();if(blob.size!==file.bytes)throw Error('Incomplete download: '+file.path);
-      try{await cache.put(absolute(file),new Response(blob,{headers}));}catch{writable=false;memory.set(file.path,{blob});}
+     try{await cache.put(absolute(file),new Response(buffer,{headers}));}
+     catch(error){
+      if(/quota|storage|disk|security/i.test(error.name+' '+error.message)){writable=false;memory.set(file.path,{blob});}
+      else try{await cache.put(absolute(file),new Response(buffer,{headers}));}catch{writable=false;memory.set(file.path,{blob});}
      }
-    }else{
-     blob=await stored.blob();memory.set(file.path,{blob});
-    }
+    }else memory.set(file.path,{blob});
     stats.memoryFiles=memory.size;
     if(count!==file.bytes){await cache?.delete(absolute(file));memory.delete(file.path);throw Error('Incomplete download: '+file.path);}
     stats.downloads++;ready.add(file.path);progress(file,file.bytes);return;
