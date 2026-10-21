@@ -9,3 +9,4 @@ node_modules/
 app.bundle.js
 asset-manifest.json
 .compressed/
+vercel-static/

@@ -1,11 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "node",
-  "buildCommand": "npm run build",
+  "framework": null,
+  "buildCommand": "npm run build && node build-vercel.mjs",
+  "outputDirectory": "vercel-static",
   "installCommand": "npm ci --include=dev",
-  "functions": {
-    "server.mjs": {
-      "includeFiles": "{assets/**,.compressed/**,app.bundle.js,asset-manifest.json,*.css,*.js,*.html,robots.txt,sitemap.xml}"
-    }
-  }
+  "headers": [
+    {"source": "/assets/(.*)", "headers": [{"key":"Cache-Control","value":"public, max-age=0, must-revalidate"}]},
+    {"source": "/sw.js", "headers": [{"key":"Cache-Control","value":"no-cache"}]}
+  ]
 }
