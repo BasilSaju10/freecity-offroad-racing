@@ -4,6 +4,29 @@ export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onP
  const byPath=new Map(files.map(f=>[f.path,f])),ready=new Set(),pending=new Map(),memory=new Map(),received=new Map();
  const stats={downloads:0,cacheHits:0,memoryFiles:0,networkBytes:0};let writable=!!cache,streamWrites=true;
  const absolute=file=>new URL(file.url,baseUrl).href;
+ async function request(file){
+  const size=4*1024*1024;
+  if(file.bytes<=size)return fetcher(absolute(file),{cache:'no-store'});
+  // Static hosting supports byte ranges. Retry a short segment instead of
+  // restarting a 50 MB vehicle when a connection drops near the end.
+  async function segment(start){
+   const end=Math.min(file.bytes-1,start+size-1);let error;
+   for(let attempt=0;attempt<4;attempt++)try{
+    const response=await fetcher(absolute(file),{cache:'no-store',headers:{Range:`bytes=${start}-${end}`}});
+    if(start===0&&response.status===200)return {response};
+    if(response.status!==206||response.headers.get('Content-Range')!==`bytes ${start}-${end}/${file.bytes}`)throw Error('Invalid partial download');
+    const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length!==end-start+1)throw Error('Incomplete download segment');
+    return {bytes,headers:response.headers};
+   }catch(cause){error=cause;if(attempt<3)await new Promise(resolve=>setTimeout(resolve,500*(attempt+1)));}
+   throw error;
+  }
+  const first=await segment(0);if(first.response)return first.response;
+  let offset=0;const headers=new Headers(first.headers);headers.delete('Content-Range');headers.delete('Content-Encoding');headers.set('Content-Length',String(file.bytes));
+  return new Response(new ReadableStream({async pull(controller){try{
+   const part=offset===0?first:await segment(offset);controller.enqueue(part.bytes);offset+=part.bytes.length;
+   if(offset===file.bytes)controller.close();
+  }catch(error){controller.error(error);}}}),{headers});
+ }
  function progress(file,bytes){received.set(file.path,bytes);onProgress({file,bytes,ready,received,stats});}
  async function transfer(file){
   const cached=cache&&await cache.match(absolute(file));
@@ -15,7 +38,7 @@ export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onP
    try{
     // Cache Storage is the durable copy; avoid duplicating large files in the
     // browser's separate HTTP disk cache as well.
-    const response=await fetcher(absolute(file),{cache:'no-store'});if(!response.ok)throw Error(`${file.path}: HTTP ${response.status}`);
+    const response=await request(file);if(!response.ok)throw Error(`${file.path}: HTTP ${response.status}`);
     const headers=new Headers(response.headers);headers.delete('Content-Encoding');headers.set('Content-Length',String(file.bytes));headers.set('X-Offride-Bytes',String(file.bytes));
     const stream=response.body.pipeThrough(new TransformStream({transform(chunk,controller){count+=chunk.byteLength;stats.networkBytes+=chunk.byteLength;if(count>file.bytes)throw Error('Unexpected download size: '+file.path);progress(file,count);controller.enqueue(chunk);}}));
     const stored=new Response(stream,{headers});let blob;
