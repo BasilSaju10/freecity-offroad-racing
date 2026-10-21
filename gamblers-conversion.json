@@ -1,0 +1,24 @@
+{
+  "map": "Gambler\u2019s Gutter",
+  "treesBefore": 5410,
+  "treesAfter": 2705,
+  "models": 84,
+  "instances": 10253,
+  "routes": 46,
+  "colliders": 6689,
+  "originalTextureFilesUsed": 115,
+  "missingSourceTextureReferences": [
+    "/levels/Gamblers_Gutter/art/terrain/Colors/t_gray_bt.png",
+    "garbage_n.dds"
+  ],
+  "spawn": {
+    "x": 60.636712250000016,
+    "y": 62.133187990149324,
+    "z": 227.82875785390624,
+    "yaw": -1.0772022190877801
+  },
+  "terrainHeightRange": [
+    0.0,
+    130.1536865234375
+  ]
+}

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 process.chdir(fileURLToPath(new URL('.',import.meta.url)));
 const source=readFileSync('main.js','utf8'),definitions=source.slice(source.indexOf('const vehicleProfiles='),source.indexOf('let activeVehicleId='));
 const profiles=new Function(definitions+'return vehicleProfiles;')(),setup=source.slice(source.indexOf('const tuning='),source.indexOf('const bodyVisual=')),apply=source.slice(source.indexOf('function applyVehicleProfile('),source.indexOf('async function loadCar('));
-const factory=new Function('C','world','testingGround',setup+`const steeringAxis={set(){return this;},normalize(){}};const dashboardDisplay={setLocalPosition(){},setLocalScale(){}};function reset(){};${apply};return{chassis,vehicle,tuning,applyVehicleProfile};`);
+const factory=new Function('C','world','testingGround',setup+`const wheelState=[];const steeringAxis={set(){return this;},normalize(){}};const dashboardDisplay={setLocalPosition(){},setLocalScale(){}};function reset(){};${apply};return{chassis,vehicle,tuning,applyVehicleProfile};`);
 const meta={n:41,step:2,minX:-40,maxZ:40,walls:Array.from({length:10},(_,i)=>({ax:0,ay:0,az:-25+i*5,bx:0,by:0,bz:-20+i*5})),scenery:[],pools:[],startBanner:{x:30,y:0,z:30},finishBanner:{x:30,y:0,z:-30}};
 const reports=[];
 for(const [id,profile] of Object.entries(profiles))for(const speed of [12,40])for(const glance of [false,true]){

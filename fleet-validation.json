@@ -7,8 +7,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 72.7,
-      "maxSpeedKmh": 51,
+      "distanceIn8Seconds": 64.7,
+      "maxSpeedKmh": 47,
       "minUprightDot": 0.96
     },
     {
@@ -17,8 +17,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 72.7,
-      "maxSpeedKmh": 51,
+      "distanceIn8Seconds": 64.7,
+      "maxSpeedKmh": 47,
       "minUprightDot": 0.96
     },
     {
@@ -27,8 +27,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 70,
-      "maxSpeedKmh": 51,
+      "distanceIn8Seconds": 62.5,
+      "maxSpeedKmh": 45,
       "minUprightDot": 0.95
     },
     {
@@ -37,8 +37,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 71.4,
-      "maxSpeedKmh": 49,
+      "distanceIn8Seconds": 64,
+      "maxSpeedKmh": 47,
       "minUprightDot": 0.96
     },
     {
@@ -47,8 +47,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 73.9,
-      "maxSpeedKmh": 53,
+      "distanceIn8Seconds": 65.6,
+      "maxSpeedKmh": 50,
       "minUprightDot": 0.97
     },
     {
@@ -57,8 +57,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 70.9,
-      "maxSpeedKmh": 48,
+      "distanceIn8Seconds": 64,
+      "maxSpeedKmh": 47,
       "minUprightDot": 0.96
     },
     {
@@ -67,8 +67,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 73,
-      "maxSpeedKmh": 51,
+      "distanceIn8Seconds": 64.9,
+      "maxSpeedKmh": 48,
       "minUprightDot": 0.97
     },
     {
@@ -77,8 +77,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 73.7,
-      "maxSpeedKmh": 51,
+      "distanceIn8Seconds": 66,
+      "maxSpeedKmh": 50,
       "minUprightDot": 0.97
     },
     {
@@ -87,8 +87,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 71.7,
-      "maxSpeedKmh": 52,
+      "distanceIn8Seconds": 64.4,
+      "maxSpeedKmh": 47,
       "minUprightDot": 0.96
     },
     {
@@ -97,8 +97,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 74.2,
-      "maxSpeedKmh": 55,
+      "distanceIn8Seconds": 66.2,
+      "maxSpeedKmh": 50,
       "minUprightDot": 0.97
     },
     {
@@ -107,8 +107,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 71,
-      "maxSpeedKmh": 48,
+      "distanceIn8Seconds": 63.9,
+      "maxSpeedKmh": 46,
       "minUprightDot": 0.96
     },
     {
@@ -117,8 +117,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 71.7,
-      "maxSpeedKmh": 52,
+      "distanceIn8Seconds": 64.2,
+      "maxSpeedKmh": 48,
       "minUprightDot": 0.96
     },
     {
@@ -127,8 +127,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 71.5,
-      "maxSpeedKmh": 50,
+      "distanceIn8Seconds": 63.7,
+      "maxSpeedKmh": 47,
       "minUprightDot": 0.96
     },
     {
@@ -137,8 +137,8 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 72.5,
-      "maxSpeedKmh": 51,
+      "distanceIn8Seconds": 64.8,
+      "maxSpeedKmh": 46,
       "minUprightDot": 0.96
     },
     {
@@ -147,9 +147,9 @@
       "vehicleScale": 1.12,
       "wheelGeometry": true,
       "spawnContacts": 4,
-      "distanceIn8Seconds": 71.3,
-      "maxSpeedKmh": 51,
-      "minUprightDot": 0.96
+      "distanceIn8Seconds": 63.7,
+      "maxSpeedKmh": 47,
+      "minUprightDot": 0.95
     }
   ]
 }

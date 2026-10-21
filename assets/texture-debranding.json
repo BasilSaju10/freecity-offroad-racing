@@ -1,0 +1,30 @@
+{
+  "obsidian-4x4": {
+    "leather02_weave_30.002": 4,
+    "interiordfs_1.002": 4,
+    "Tire_Shader.005": 12068,
+    "Tire_Shader.006": 12026,
+    "Tire_Shader.001": 12060,
+    "Tire_Shader.004": 10954,
+    "leather02_weave_11.002": 21,
+    "plastic5_6.002": 148,
+    "leather02_weave_22.002": 13,
+    "leather02_weave_24.002": 2,
+    "leather02_weave_6.002": 5
+  },
+  "rock-buggy": {
+    "Board": 22
+  },
+  "summit-coupe": {
+    "Material.001": 1348,
+    "Material.002": 234
+  },
+  "rock-ranger": {
+    "Material.002": 279,
+    "Material.001": 696
+  },
+  "expedition-hauler": {
+    "Material.001": 848,
+    "Material.002": 194
+  }
+}

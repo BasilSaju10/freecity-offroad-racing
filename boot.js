@@ -1,19 +1,31 @@
-const $=id=>document.getElementById(id);let progress=0;
-function show(value,message,detail=''){progress=Math.max(progress,Math.min(100,value));$('loading-progress').setAttribute('aria-valuenow',String(Math.floor(progress)));$('loading-percent').textContent=Math.floor(progress)+'%';$('loading-car').style.left=`calc(${progress}% - ${progress*.92}px)`;$('loading-message').textContent=message;$('loading-detail').textContent=detail;}
-window.offrideLoading={stage:(value,message)=>show(value,message),complete(){show(100,'Ready to drive','All vehicles ready');$('loading-screen').hidden=true;},fail(error){$('loading-message').textContent='Loading stopped: '+error.message;$('loading-detail').textContent='Your completed downloads are saved.';$('retry-loading').hidden=false;}};
+import {coreAssetFiles,requiredMapTextures} from './asset-plan.js';
+import {createAssetPreloader} from './asset-preloader.js';
+const $=id=>document.getElementById(id);let progress=0,downloadsReady=false,failed=false;
+function show(value,message,detail=''){if(failed)return;progress=Math.max(progress,Math.min(100,value));$('loading-progress').setAttribute('aria-valuenow',String(Math.floor(progress)));$('loading-percent').textContent=Math.floor(progress)+'%';$('loading-car').style.left=`calc(${progress}% - ${progress*.92}px)`;$('loading-message').textContent=message;$('loading-detail').textContent=detail;}
+window.offrideLoading={stage:(value,message)=>show(value,message),complete(){if(failed)return;if(!downloadsReady)throw Error('Required files have not finished loading');show(100,'Ready to drive','All required files ready');$('loading-screen').dataset.downloadsReady='true';$('loading-screen').hidden=true;},fail(error){failed=true;$('loading-message').textContent='Loading stopped: '+error.message;$('loading-detail').textContent='Completed downloads will be reused when you retry.';$('retry-loading').hidden=false;}};
 window.addEventListener('error',event=>{if(!$('loading-screen').hidden)window.offrideLoading.fail(event.error||Error(event.message));});
 window.addEventListener('unhandledrejection',event=>{if(!$('loading-screen').hidden)window.offrideLoading.fail(event.reason instanceof Error?event.reason:Error(String(event.reason)));});
 $('retry-loading').onclick=()=>location.reload();
 try{
- const manifest=await(await fetch('./asset-manifest.json',{cache:'no-store'})).json();window.offrideAssets={url:path=>manifest.files.find(f=>f.path===path.replace(/^\.\//,''))?.url||path};
- let cache=null;try{cache=await caches.open('offride-assets-v2');}catch{}
- if('serviceWorker' in navigator){await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>{navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true});setTimeout(resolve,5000);});}
- const total=manifest.files.reduce((n,f)=>n+f.bytes,0),received=new Map();let completed=0,cursor=0,lastPaint=0;
- const report=(f,n)=>{received.set(f.path,Math.min(n,f.bytes));const now=performance.now();if(now-lastPaint<80&&n<f.bytes)return;lastPaint=now;const loaded=[...received.values()].reduce((a,b)=>a+b,0);show(loaded/total*95,`Loading garage and world · ${completed}/${manifest.files.length} files`,`${(loaded/1e6).toFixed(1)} / ${(total/1e6).toFixed(1)} MB`);};
- async function download(f){const url=new URL(f.url,location.href).href,cached=cache&&await cache.match(url);if(cached&&Number(cached.headers.get('X-Offride-Bytes'))===f.bytes){completed++;report(f,f.bytes);return;}
-  let failure;for(let attempt=0;attempt<3;attempt++)try{const response=await fetch(url);if(!response.ok)throw Error(`${f.path}: HTTP ${response.status}`);const reader=response.body.getReader(),parts=[];let count=0;while(true){const {value,done}=await reader.read();if(done)break;parts.push(value);count+=value.byteLength;report(f,count);}if(count!==f.bytes)throw Error('Incomplete download: '+f.path);if(cache){const headers=new Headers(response.headers);headers.delete('Content-Encoding');headers.set('Content-Length',String(count));headers.set('X-Offride-Bytes',String(count));await cache.put(url,new Response(new Blob(parts),{headers}));}completed++;report(f,count);return;}catch(e){failure=e;}throw failure;
+ const response=await fetch('./asset-manifest.json',{cache:'no-store'});if(!response.ok)throw Error('Could not load the asset list');const manifest=await response.json();
+ let cache=null;try{for(const name of await caches.keys())if(/^offride-assets-v[0-9]+$/.test(name)&&name!=='offride-assets-v2')await caches.delete(name);cache=await caches.open('offride-assets-v2');}catch{}
+ if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js');await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>{navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true});setTimeout(resolve,5000);});}catch{}}
+ // Without a controlling service worker, blob URLs provide the same downloaded data.
+ if(!navigator.serviceWorker?.controller)cache=null;
+ let phase=null,lastPaint=0;
+ function paint({ready,received,stats}){
+  if(!phase)return;const now=performance.now(),completed=ready.size-phase.readyStart;if(now-lastPaint<80&&completed<phase.files.length)return;lastPaint=now;
+  const loaded=phase.files.reduce((sum,f)=>sum+(received.get(f.path)||0),0),total=phase.total;
+  show(phase.from+(phase.to-phase.from)*(total?loaded/total:1),`${phase.name} ${completed}/${phase.files.length}`,`${(loaded/1e6).toFixed(1)} / ${(total/1e6).toFixed(1)} MB`);
+  Object.assign($('loading-screen').dataset,{readyFiles:String(ready.size),cacheHits:String(stats.cacheHits),networkDownloads:String(stats.downloads)});
  }
- async function worker(){while(cursor<manifest.files.length){const file=manifest.files[cursor++];await download(file);}}
- await Promise.all(Array.from({length:3},worker));show(95,'Starting the engine','All 15 vehicle files downloaded');await import(window.offrideAssets.url('./app.bundle.js'));
- if(cache){const names=await caches.keys();for(const name of names)if(name.startsWith('offride-')&&name!=='offride-assets-v2')await caches.delete(name);}
+ const store=createAssetPreloader({files:manifest.files,baseUrl:location.href,cache,onProgress:paint}),core=coreAssetFiles(manifest);let required=core,mapPromise;
+ window.offrideAssets={url:store.url,stats:store.stats,prepareMap(device){return mapPromise??=(async()=>{
+   const scene=await(await fetch(store.url('./assets/gamblers/scene.json'))).json(),textures=requiredMapTextures(manifest,scene,!!device.extTextureCompressionBPTC);
+   required=[...core,...textures];await store.prune(required);phase={files:textures,readyStart:store.ready.size,total:textures.reduce((sum,f)=>sum+f.bytes,0),from:65,to:95,name:'Loading map textures'};$('loading-screen').dataset.requiredFiles=String(required.length);
+   await store.download(textures,3);store.assertReady(required);downloadsReady=true;
+   Object.assign($('loading-screen').dataset,{readyFiles:String(store.ready.size),requiredFiles:String(required.length),downloadsReady:'true',cacheHits:String(store.stats.cacheHits),networkDownloads:String(store.stats.downloads),textureFormat:device.extTextureCompressionBPTC?'original BC7':'PNG fallback'});
+  })();},async whenReady(){if(!mapPromise)throw Error('Map assets were not prepared');await mapPromise;store.assertReady(required);}};
+ await store.prune(manifest.files);phase={files:core,readyStart:0,total:core.reduce((sum,f)=>sum+f.bytes,0),from:0,to:65,name:'Loading garage and world'};await store.download(core,3);
+ show(65,'Preparing compatible map textures','All vehicles and audio files downloaded');await import(store.url('./app.bundle.js'));
 }catch(error){console.error(error);window.offrideLoading.fail(error);}

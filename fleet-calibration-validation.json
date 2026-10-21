@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "steeringAssemblies": 10,
+  "lamps": {
+    "trail-hauler": {
+      "front": {
+        "triangles": 120,
+        "area": 0.14845489099863177
+      },
+      "rear": {
+        "triangles": 12,
+        "area": 0.07165555860715038
+      }
+    },
+    "trail-scout": {
+      "front": {
+        "triangles": 1389,
+        "area": 0.27245187625538536
+      },
+      "rear": {
+        "triangles": 2131,
+        "area": 0.4456582675663296
+      }
+    },
+    "summit-coupe": {
+      "front": {
+        "triangles": 448,
+        "area": 0.5287948118712329
+      },
+      "rear": {
+        "triangles": 408,
+        "area": 0.4328987052652288
+      }
+    },
+    "rock-ranger": {
+      "front": {
+        "triangles": 400,
+        "area": 0.4872833796980027
+      },
+      "rear": {
+        "triangles": 218,
+        "area": 0.3117864450235568
+      }
+    },
+    "expedition-hauler": {
+      "front": {
+        "triangles": 96,
+        "area": 0.16525154650744311
+      },
+      "rear": {
+        "triangles": 132,
+        "area": 0.5418055761000077
+      }
+    }
+  }
+}

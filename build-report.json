@@ -1,8 +1,11 @@
 {
-  "rawBytes": 420270912,
-  "transferBytes": 222036180,
+  "rawBytes": 1138168762,
+  "transferBytes": 856333229,
+  "initialPreloadBytes": 623341752,
+  "map": "gamblers-gutter",
   "lossless": true,
   "engineRequests": 1,
-  "vehicles": 15,
-  "version": "780f0ec21d587b89"
+  "vehicles": 25,
+  "bikes": 2,
+  "version": "976b7408e8da552b"
 }

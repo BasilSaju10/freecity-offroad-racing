@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict';
 import {createWeatherState,weatherCycle,weatherPresets} from './weather-state.js';
-const s=createWeatherState();assert.equal(s.update(0).mode,'day');
-for(let round=0;round<3;round++)for(let i=0;i<weatherCycle.length;i++){assert.equal(s.update(0).mode,weatherCycle[i][0]);const end=s.update(weatherCycle[i][1]);assert(end.automatic);assert.equal(end.mode,weatherCycle[(i+1)%weatherCycle.length][0]);}
-s.select('night');assert.equal(s.update(600).mode,'night');assert.equal(s.update(0).automatic,false);s.select('rain');assert.equal(s.update(1000).mode,'rain');assert.equal(s.update(0).preset.rain,.65);s.select('invalid');assert.equal(s.update(0).mode,'rain');s.select('auto');assert.equal(s.update(0).mode,'day');assert.equal(s.update(80+70).mode,'storm');assert.equal(s.update(-50).mode,'storm');
-for(const k of ['rain','storm']){const sky=weatherPresets[k].sky;assert(Math.max(...sky)-Math.min(...sky)<.07,'Rain sky is grey');assert(Math.max(...sky)<.3,'Rain sky is dark');}
-assert(weatherPresets.night.power<weatherPresets.day.power*.2);
-console.log('Passed: automatic repeat cycle, long/manual holds, resume auto, invalid selection, grey rainy skies and night lighting.');
+import {createWeather} from './weather.js';
+const state=createWeatherState();assert.deepEqual(weatherCycle.map(([name])=>name),['day','night']);
+for(let i=0;i<10;i++){assert.equal(state.update(0).mode,i%2?'night':'day');assert.equal(state.update(80).mode,i%2?'day':'night');}
+assert.equal(state.update(1600).mode,'day');assert.equal(state.update(-50).mode,'day');
+for(const name of ['rain','storm','invalid']){state.select(name);assert.equal(state.update(0).mode,'day');}
+assert(Object.values(weatherPresets).every(p=>p.rain===0));assert(weatherPresets.night.power<weatherPresets.day.power*.2);
+class Color{set(){}copy(){}}
+const app={scene:{ambientLight:new Color(),fog:{color:new Color()}}},camera={camera:{clearColor:new Color()}},sun={light:{color:new Color()}};
+const weather=createWeather({Color},app,camera,sun,{viewDistance:{fogStart:90,fogEnd:145}});
+for(let i=0;i<480;i++){weather.update(1);assert.equal(weather.rain,0);assert(app.scene.fog.end<=145);}
+console.log('Passed: repeated day/night cycle, no rain/storm modes or rain geometry, and distance fog preserved.');

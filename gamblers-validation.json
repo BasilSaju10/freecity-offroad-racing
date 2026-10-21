@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "trees": 2705,
+  "terrainCollisionSamples": 120,
+  "randomRaceCourses": 30,
+  "checkpointsPerRace": 10,
+  "colliders": 6689,
+  "spawnWheelContacts": 3,
+  "driveDistance": 15.188917845941075,
+  "minClearance": 0.43295935824073695,
+  "fogMetres": 145,
+  "cullMetres": 170,
+  "clipMetres": 180
+}

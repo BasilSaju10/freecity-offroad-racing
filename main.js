@@ -1,3 +1,12 @@
+import {createMinimap} from './minimap.js';
+import {vehicleSpeedLimit,enforceVehicleSpeedLimit,truckVehicleIds} from './vehicle-limits.js';
+import {applyBurnoutDrift} from './burnout-drift.js';
+import {attachedFleetProfiles} from './attached-fleet-profiles.js';
+import {applyVehicleNames} from './vehicle-names.js';
+import {bikeProfiles} from './bike-profiles.js';
+import {configureBikeWheels,bikeControls,stabilizeBikeTraction} from './bike-physics.js';
+import {createBikeRider} from './bike-rider.js';
+import {updateBikeSuspension} from './bike-suspension.js';
 import {createDriveSoundSequence} from './drive-sound-sequence.js';
 import {createWeather} from './weather.js';
 import {createWindshieldWipers} from './windshield-wipers.js';
@@ -17,12 +26,14 @@ import {solidifyWheelSurfaces} from './wheel-surfaces.js';
 import {constrainCameraToTerrain,exteriorPitchLimits} from './camera-terrain.js';
 import {createDrivingSoil} from './driving-soil.js';
 import { createMapBroadphase } from './map-broadphase.js';
-import { loadFreeCity } from './freecity-world.js';
+import {loadGamblersGutter} from './gamblers-world.js';
 import * as pc from './vendor/playcanvas/index.js';
 import * as C from './vendor/cannon-es.js';
 
 const $ = id => document.getElementById(id);
 const app = new pc.Application($('canvas'), { graphicsDeviceOptions: { antialias: true, alpha: false } });
+app.graphicsDevice.supportsImageBitmap=false;
+await globalThis.offrideAssets?.prepareMap?.(app.graphicsDevice);
 const vehicleAssets=createVehicleAssets(pc,app);
 app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW); app.setCanvasResolution(pc.RESOLUTION_AUTO);
 app.graphicsDevice.maxPixelRatio = Math.min(devicePixelRatio, 1.7);
@@ -44,7 +55,9 @@ const lighting=pc.EnvLighting.generateLightingSource(skyTexture,{size:64});
 app.scene.envAtlas=pc.EnvLighting.generateAtlas(lighting,{size:256,numReflectionSamples:64,numAmbientSamples:64});
 const world=new C.World({gravity:new C.Vec3(0,-9.81,0)});world.broadphase=createMapBroadphase(C,world);world.solver.iterations=15;world.defaultContactMaterial.friction=.55;world.defaultContactMaterial.restitution=.02;
 $('status').textContent='Loading OFFRIDE map and collision surfaces...';
-let testingGround;try{testingGround=await loadFreeCity(pc,C,app,world);}catch(e){$('status').textContent='Could not load OFFRIDE: '+e.message;throw e;}
+let testingGround;try{testingGround=await loadGamblersGutter(pc,C,app,world);}catch(e){$('status').textContent='Could not load OFFRIDE: '+e.message;throw e;}
+
+camera.camera.farClip=testingGround.viewDistance.clip;
 
 // Units: meters, kilograms, seconds. A heavy SUV-like starting tune, not manufacturer telemetry.
 const tuning={mass:2500,wheelbase:2.856924,track:1.655536,radius:.39975,restLength:.36,stiffness:32,compression:4.8,rebound:4.2,travel:.20,engineForce:3300,brake:42,rideHeight:.54165,rearDrive:false,eye:[-.43,.90,.25]};
@@ -71,8 +84,14 @@ for(let i=0;i<4;i++){const pivot=new pc.Entity('Wheel '+i);app.root.addChild(piv
 let loadedWheels=null,loadedBrakes=null,steeringVisual=null,modelReady=false;
 const wheelState=vehicle.wheelInfos.map(()=>({previousLength:tuning.restLength,length:tuning.restLength,previousSpin:0,spin:0,previousSteer:0,steer:0}));
 let spawnPoint=testingGround.meta.spawn;
-const keys=new Set();let steering=0,view=0,paused=false;let cameraYaw=0,cameraPitch=.30,cameraDistance=10;const canvas=$('canvas');let softMouseLook=false;const camPos=new pc.Vec3(9,6,13),target=new pc.Vec3(),offset=new pc.Vec3();
+let starting=true;
+const keys=new Set();let steering=0,bikeRenderSteer=0,view=0,paused=false;let cameraYaw=0,cameraPitch=.30,cameraDistance=10;const canvas=$('canvas');let softMouseLook=false;const camPos=new pc.Vec3(9,6,13),target=new pc.Vec3(),offset=new pc.Vec3();
 const vehicleAudio=createVehicleAudio(),vehicleLights=createVehicleLights(pc),driveGearSequence=createDriveSoundSequence();let headlights=false;
+const minimap=createMinimap($('minimap'),testingGround);
+const mapForward=new C.Vec3();
+function toggleRange(){if(!modelReady||networkLock.freeze)return;tuning.lowRange=!tuning.lowRange;const button=$('gear-toggle');button.setAttribute('aria-pressed',String(tuning.lowRange));$('gear-name').textContent=tuning.lowRange?'Low gear':'High gear';$('gear-limit').textContent=tuning.lowRange?'15 km/h':'Normal';button.title=tuning.lowRange?'Switch to high gear (G)':'Switch to low gear for climbing (G)';enforceVehicleSpeedLimit(chassis,tuning,vehicle.wheelInfos.some(w=>w.isInContact));}
+$('gear-toggle').onclick=toggleRange;
+addEventListener('keydown',e=>{if(e.code==='KeyG'&&!e.repeat&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&!$('vehicle-picker').open&&!document.getElementById('online-dialog')?.open)toggleRange();});
 const weather=createWeather(pc,app,camera,sun,testingGround,()=>vehicleAudio.thunder());
 const wipers=createWindshieldWipers(pc,bodyVisual);
 const headlightBeams=[-1,1].map(side=>{const e=new pc.Entity('Headlight road beam');e.addComponent('light',{type:'spot',color:new pc.Color(.86,.92,1),intensity:5,range:42,innerConeAngle:24,outerConeAngle:38,castShadows:false});e.setLocalEulerAngles(82,0,0);bodyVisual.addChild(e);e.enabled=false;return{e,side};});
@@ -80,12 +99,12 @@ function toggleHeadlights(){headlights=!headlights;vehicleAudio.headlights();$('
 $('headlight-toggle').onclick=toggleHeadlights;
 addEventListener('keydown',e=>{if(e.code==='KeyH'&&!e.repeat&&!/INPUT|TEXTAREA/.test(e.target.tagName))toggleHeadlights();});
 chassis.addEventListener('collide',e=>{if(!paused&&modelReady)vehicleAudio.impact(Math.abs(e.contact.getImpactVelocityAlongNormal()));});
-function reset(pose=spawnPoint){driveGearSequence.reset();waterSplashes.reset();exhaustSmoke.reset();chassis.position.set(pose.x,testingGround.heightAt(pose.x,pose.z)+tuning.rideHeight+.15,pose.z);chassis.quaternion.setFromAxisAngle(new C.Vec3(0,1,0),pose.yaw);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.force.setZero();chassis.torque.setZero();chassis.wakeUp();steering=0;cameraYaw=0;cameraPitch=view===2?.10:.30;for(const state of wheelState){state.previousSteer=state.steer=0;state.previousSpin=state.spin=0;state.previousLength=state.length=tuning.restLength;}chassis.previousPosition.copy(chassis.position);chassis.interpolatedPosition.copy(chassis.position);chassis.previousQuaternion.copy(chassis.quaternion);chassis.interpolatedQuaternion.copy(chassis.quaternion);chassis.aabbNeedsUpdate=true;for(let i=0;i<4;i++){vehicle.setSteeringValue(0,i);vehicle.setBrake(0,i);vehicle.applyEngineForce(0,i);}const back=chassis.quaternion.vmult(new C.Vec3(5,4.5,10));camPos.set(chassis.position.x+back.x,chassis.position.y+back.y,chassis.position.z+back.z);}
+function reset(pose=spawnPoint){driveGearSequence.reset();waterSplashes.reset();exhaustSmoke.reset();chassis.position.set(pose.x,testingGround.heightAt(pose.x,pose.z)+tuning.rideHeight+.15,pose.z);chassis.quaternion.setFromAxisAngle(new C.Vec3(0,1,0),pose.yaw);chassis.velocity.setZero();chassis.angularVelocity.setZero();chassis.force.setZero();chassis.torque.setZero();chassis.wakeUp();steering=0;cameraYaw=0;cameraPitch=view===2?(tuning.bike?.16:(tuning.cockpitPitch??.10)):.30;for(const state of wheelState){state.previousSteer=state.steer=0;state.previousSpin=state.spin=0;state.previousLength=state.length=tuning.restLength;}chassis.previousPosition.copy(chassis.position);chassis.interpolatedPosition.copy(chassis.position);chassis.previousQuaternion.copy(chassis.quaternion);chassis.interpolatedQuaternion.copy(chassis.quaternion);chassis.aabbNeedsUpdate=true;for(let i=0;i<vehicle.wheelInfos.length;i++){vehicle.setSteeringValue(0,i);vehicle.setBrake(0,i);vehicle.applyEngineForce(0,i);}const back=chassis.quaternion.vmult(new C.Vec3(5,4.5,10));camPos.set(chassis.position.x+back.x,chassis.position.y+back.y,chassis.position.z+back.z);}
 reset();
 function resetToTrack(){if(networkLock.freeze)return;keys.clear();const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));const pose=nearestTrackPose([testingGround.meta.trail,...(testingGround.meta.routes||[]).map(r=>r.points)],chassis.position,forward)||spawnPoint;reset(pose);$('status').textContent='Returned to the nearest track centre.';}
 $('reset-track').onclick=resetToTrack;
 let lastCameraChange=-1000;
-function selectCamera(mode){view=mode;cameraYaw=0;cameraPitch=view===2?.10:.30;document.body.classList.toggle('cockpit',view===2);$('view-name').textContent=['CHASE CAMERA','ORBIT CAMERA','DRIVER SEAT'][view];camera.camera.fov=view===2?68:58;if(activeModel)for(const mi of activeModel.glassInstances)mi.visible=view!==2;}
+function selectCamera(mode){view=mode;cameraYaw=0;cameraPitch=view===2?(tuning.bike?.16:(tuning.cockpitPitch??.10)):.30;document.body.classList.toggle('cockpit',view===2);$('view-name').textContent=['CHASE CAMERA','ORBIT CAMERA','DRIVER SEAT'][view];camera.camera.fov=view===2?(tuning.bike?86:68):58;if(activeModel)for(const mi of activeModel.glassInstances)mi.visible=view!==2;}
 function cycleCamera(){if(performance.now()-lastCameraChange<250)return;lastCameraChange=performance.now();selectCamera((view+1)%3);}
 addEventListener('keydown',e=>{if($('vehicle-picker').open||document.getElementById('online-dialog')?.open)return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code);if(!e.repeat&&!paused&&!networkLock.freeze){if(['KeyW','ArrowUp'].includes(e.code))vehicleAudio.direction(1);else if(['KeyS','ArrowDown'].includes(e.code))vehicleAudio.direction(-1);}if(!e.repeat&&e.code==='KeyR')resetToTrack();if(!e.repeat&&e.code==='KeyF')selectCamera(2);if(!e.repeat&&e.code==='KeyC'){cycleCamera();}});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();paused=true;});addEventListener('focus',()=>paused=$('vehicle-picker').open||document.getElementById('online-dialog')?.open);$('reset').onclick=resetToTrack;$('camera-toggle').onclick=cycleCamera;$('driver-view').onclick=()=>selectCamera(2);
 // Pointer lock keeps mouse movement relative while the camera follows the vehicle.
@@ -99,11 +118,13 @@ addEventListener('mousemove',e=>{if(document.pointerLockElement!==canvas&&!orbit
 canvas.addEventListener('wheel',e=>{e.preventDefault();cameraDistance=Math.max(4,Math.min(22,cameraDistance+e.deltaY*.008));},{passive:false});
 document.addEventListener('pointerlockchange',()=>{softMouseLook=false;canvas.style.cursor=document.pointerLockElement===canvas?'none':'grab';$('mouse-hint').textContent=document.pointerLockElement===canvas?'MOUSE LOOK ON · ESC TO RELEASE':'CLICK SCENE TO LOOK AROUND';});
 const signedSpeed=()=>chassis.velocity.dot(chassis.quaternion.vmult(new C.Vec3(0,0,-1)));
-function controls(dt){if(networkLock.freeze){for(let i=0;i<4;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const speed=signedSpeed(),throttle=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0),turn=(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)-(keys.has('KeyD')||keys.has('ArrowRight')?1:0);const gearPhase=driveGearSequence.update({speed,throttle},dt);if(gearPhase.mode==='shifting'){if(gearPhase.shift){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));chassis.velocity.vsub(forward.scale(speed),chassis.velocity);}for(let i=0;i<4;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const limit=.5/(1+Math.abs(speed)*.055);steering+=(turn*limit-steering)*(1-Math.exp(-dt*7));const turnRadius=tuning.wheelbase/Math.tan(Math.max(.0001,Math.abs(steering)));const inner=Math.atan(tuning.wheelbase/(turnRadius-tuning.track/2)),outer=Math.atan(tuning.wheelbase/(turnRadius+tuning.track/2));vehicle.setSteeringValue(Math.sign(steering)*(steering>0?inner:outer),0);vehicle.setSteeringValue(Math.sign(steering)*(steering>0?outer:inner),1);const braking=throttle!==0&&speed*throttle<-.7;const speedLimit=throttle<0?11:44;const powerLimited=Math.min(tuning.engineForce,190000/(4*Math.max(1,Math.abs(speed))));const limiter=Math.max(0,Math.min(1,(speedLimit-Math.abs(speed))/3));const force=braking?0:throttle*powerLimited*limiter;const burnout=keys.has('Space')&&throttle!==0&&!braking&&Math.abs(speed)<8;for(let i=0;i<4;i++){vehicle.applyEngineForce(burnout?(i>1?force*1.15:0):(tuning.rearDrive&&i<2?0:force),i);vehicle.setBrake(braking?tuning.brake:throttle===0?(Math.abs(speed)<.8?45:.25):0,i);testingGround.applyWheelSurface(vehicle,chassis,tuning,i,keys.has('Space')&&i>1);if(burnout){vehicle.setBrake(i<2?120:0,i);if(i>1)vehicle.wheelInfos[i].frictionSlip*=.2;}else if(keys.has('Space')&&i>1)vehicle.setBrake(150,i);}if(Math.abs(speed)>1){const drag=-speed*Math.abs(speed)*.55;chassis.applyForce(chassis.quaternion.vmult(new C.Vec3(0,0,-drag)));}}
+// Low range adds crawl torque, tyre grip, and a grounded uphill assist; high range retains its original tune.
+function controls(dt){if(tuning.bike&&!networkLock.freeze){const input={throttle:Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown')),turn:Number(keys.has('KeyA')||keys.has('ArrowLeft'))-Number(keys.has('KeyD')||keys.has('ArrowRight')),handbrake:keys.has('Space'),steering};steering=bikeControls(C,vehicle,chassis,tuning,testingGround,input,dt);return;}if(networkLock.freeze){for(let i=0;i<vehicle.wheelInfos.length;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const speed=signedSpeed(),throttle=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0),turn=(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)-(keys.has('KeyD')||keys.has('ArrowRight')?1:0);const gearPhase=driveGearSequence.update({speed,throttle},dt);if(gearPhase.mode==='shifting'){if(gearPhase.shift){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));chassis.velocity.vsub(forward.scale(speed),chassis.velocity);}for(let i=0;i<vehicle.wheelInfos.length;i++){vehicle.applyEngineForce(0,i);vehicle.setBrake(120,i);}return;}const limit=.5/(1+Math.abs(speed)*.055);steering+=(turn*limit-steering)*(1-Math.exp(-dt*7));const turnRadius=tuning.wheelbase/Math.tan(Math.max(.0001,Math.abs(steering)));const inner=Math.atan(tuning.wheelbase/(turnRadius-tuning.track/2)),outer=Math.atan(tuning.wheelbase/(turnRadius+tuning.track/2));vehicle.setSteeringValue(Math.sign(steering)*(steering>0?inner:outer),0);vehicle.setSteeringValue(Math.sign(steering)*(steering>0?outer:inner),1);const braking=throttle!==0&&speed*throttle<-.7;const speedLimit=throttle<0?Math.min(11,vehicleSpeedLimit(tuning)):vehicleSpeedLimit(tuning);const powerLimited=Math.min(tuning.engineForce*(tuning.lowRange?3.4:1),(tuning.lowRange?285000:190000)/(4*Math.max(1,Math.abs(speed))));const limiter=Math.max(0,Math.min(1,(speedLimit-Math.abs(speed))/(tuning.lowRange?.6:3)));const force=braking?0:throttle*powerLimited*limiter;const burnout=keys.has('Space')&&throttle>0&&!braking,drifting=burnout&&turn!==0;for(let i=0;i<4;i++){vehicle.applyEngineForce(burnout?(i>1?force*1.15:0):(tuning.rearDrive&&i<2?0:force),i);vehicle.setBrake(braking?tuning.brake:throttle===0?(tuning.lowRange?80:Math.abs(speed)<.8?45:.25):0,i);testingGround.applyWheelSurface(vehicle,chassis,tuning,i,keys.has('Space')&&i>1);if(tuning.lowRange&&vehicle.wheelInfos[i].isInContact)vehicle.wheelInfos[i].frictionSlip*=1.5;if(burnout){vehicle.setBrake(i<2?(drifting?0:120):0,i);if(drifting)vehicle.wheelInfos[i].frictionSlip*=.04;else if(i>1)vehicle.wheelInfos[i].frictionSlip*=.2;}else if(keys.has('Space')&&i>1)vehicle.setBrake(150,i);}if(tuning.lowRange&&throttle!==0&&!braking&&!burnout){const hits=vehicle.wheelInfos.filter(w=>w.isInContact);if(hits.length){const normal=new C.Vec3();for(const w of hits)normal.vadd(w.raycastResult.hitNormalWorld,normal);normal.normalize();const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-throttle)),along=forward.vsub(normal.scale(forward.dot(normal)));along.normalize();if(normal.y>.35&&along.y>0)chassis.applyForce(along.scale(tuning.mass*9.81*along.y*.65));}}if(burnout)applyBurnoutDrift(C,chassis,turn,dt);if(Math.abs(speed)>1){const drag=-speed*Math.abs(speed)*.55;chassis.applyForce(chassis.quaternion.vmult(new C.Vec3(0,0,-drag)));}}
 // Capture suspension and rolling angle at each physics step, then interpolate for rendering.
 world.addEventListener('preStep',()=>{controls(1/120);vehicle.updateVehicle(1/120);});
 world.addEventListener('postStep',()=>{
- for(let i=0;i<4;i++){
+ if(tuning.bike)stabilizeBikeTraction(C,vehicle,chassis,tuning,1/120);enforceVehicleSpeedLimit(chassis,tuning,vehicle.wheelInfos.some(w=>w.isInContact));
+ for(let i=0;i<vehicle.wheelInfos.length;i++){
   const w=vehicle.wheelInfos[i],state=wheelState[i];
   state.previousLength=state.length;state.length=w.suspensionLength;
   state.previousSpin=state.spin;state.previousSteer=state.steer;state.steer=w.steering;
@@ -120,9 +141,10 @@ const steeringAxis=new pc.Vec3(0,.65,.76).normalize();
 function sync(){
  const p=chassis.interpolatedPosition,q=chassis.interpolatedQuaternion;
  bodyVisual.setPosition(p.x,p.y,p.z);quat.set(q.x,q.y,q.z,q.w);bodyVisual.setRotation(quat);
- if(steeringVisual){steerQuat.setFromAxisAngle(steeringAxis,steering*14*180/Math.PI);steerQuat.mul(activeModel.steeringRest);steeringVisual.setLocalRotation(steerQuat);}
+ if(tuning.bike&&wheelState[0]){const state=wheelState[0],alpha=Math.max(0,Math.min(1,world.accumulator/(1/120)));bikeRenderSteer=state.previousSteer+(state.steer-state.previousSteer)*alpha;}
+ if(steeringVisual){steerQuat.setFromAxisAngle(tuning.bike?pc.Vec3.UP:steeringAxis,(tuning.bike?bikeRenderSteer:steering)*(tuning.bike?1:14)*180/Math.PI);steerQuat.mul(activeModel.steeringRest);steeringVisual.setLocalRotation(steerQuat);}
  const alpha=Math.max(0,Math.min(1,world.accumulator/(1/120)));
- for(let i=0;i<4;i++){
+ for(let i=0;i<vehicle.wheelInfos.length;i++){
   const state=wheelState[i],info=vehicle.wheelInfos[i];
   const length=state.previousLength+(state.length-state.previousLength)*alpha;
   const spin=state.previousSpin+(state.spin-state.previousSpin)*alpha;
@@ -158,7 +180,7 @@ function updateCamera(dt){
 let physicsAccumulator=0;
 app.on('update',dt=>{
  dt=Math.min(dt,.1);
- if(!paused){
+ if(!paused&&!starting){
   // Keep simulation time independent of rendering cost. Cannon's built-in catch-up
   // loop otherwise discards steps after an 8 ms budget, making the car run slowly.
   physicsAccumulator+=dt;
@@ -168,16 +190,17 @@ app.on('update',dt=>{
   chassis.previousPosition.lerp(chassis.position,alpha,chassis.interpolatedPosition);
   chassis.previousQuaternion.slerp(chassis.quaternion,alpha,chassis.interpolatedQuaternion);
  }
- sync();driver.update(steering,view);updateCamera(dt);testingGround.updateVisibility?.(camera.getPosition(),dt);online?.update(dt,chassis.position);if(!paused){drivingSoil.update(activeModel,vehicle,chassis,tuning,dt,wheelState);if(modelReady){waterSplashes.update(activeVehicleId,vehicle,chassis,tuning,dt);const throttle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));exhaustSmoke.update(activeVehicleId,bodyVisual,chassis,vehicleScale,throttle,signedSpeed(),dt);}}
+ sync();driver.root.enabled=!tuning.bike;driver.update(steering,view);if(activeModel?.rider){activeModel.rider.root.enabled=!!tuning.bike;activeModel.rider.update({speed:signedSpeed(),steer:bikeRenderSteer,reverse:(keys.has('KeyS')||keys.has('ArrowDown'))&&signedSpeed()<.4,grounded:vehicle.wheelInfos.some(w=>w.isInContact),dt:paused?0:dt,view});}if(tuning.bike&&activeModel)updateBikeSuspension(activeModel.model,tuning,vehicleScale,wheelState.map(w=>w.length),bikeRenderSteer);updateCamera(dt);testingGround.updateVisibility?.(camera.getPosition(),dt);online?.update(dt,chassis.position);if(!paused&&!starting){drivingSoil.update(activeModel,vehicle,chassis,tuning,dt,wheelState);if(modelReady){waterSplashes.update(activeVehicleId,vehicle,chassis,tuning,dt);const throttle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));exhaustSmoke.update(activeVehicleId,bodyVisual,chassis,vehicleScale,throttle,signedSpeed(),dt);}}
  const soundSpeed=signedSpeed(),soundThrottle=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown')),soundBraking=(soundThrottle!==0&&soundSpeed*soundThrottle<-.7)||keys.has('Space');
  vehicleLights.update(activeModel,headlights,soundBraking);
- weather.update(dt,{view,body:bodyVisual,profile:tuning,scale:vehicleScale,paused});
- wipers.update(activeVehicleId,weather.rain,dt,vehicleScale);
+ weather.update(dt,{view,body:bodyVisual,profile:tuning,scale:vehicleScale,paused:paused||starting});
+ wipers.update(activeVehicleId,tuning.bike?0:weather.rain,dt,vehicleScale);
  const lamp=lampProfiles[activeVehicleId];for(const {e,side} of headlightBeams){e.enabled=headlights&&modelReady;if(lamp)e.setLocalPosition(side*(lamp.f[0]+lamp.f[1])*.5*vehicleScale,(lamp.f[2]+lamp.f[3])*.5*vehicleScale,lamp.f[4]*vehicleScale-.04);}
- vehicleAudio.update({speed:soundSpeed,throttle:paused||networkLock.freeze?0:soundThrottle,brake:soundBraking,burnout:keys.has('Space')&&soundThrottle!==0&&Math.abs(soundSpeed)<8,grounded:vehicle.wheelInfos.some(w=>w.isInContact),paused:paused||!modelReady||carLoading},dt);
- $('speed').textContent=Math.round(Math.abs(soundSpeed)*3.6);
+ vehicleAudio.update({speed:soundSpeed,throttle:paused||networkLock.freeze?0:soundThrottle,brake:soundBraking,burnout:keys.has('Space')&&soundThrottle!==0&&Math.abs(soundSpeed)<8,grounded:vehicle.wheelInfos.some(w=>w.isInContact),paused:paused||starting||!modelReady||carLoading},dt);
+ $('speed').textContent=Math.round(Math.abs(soundSpeed)*3.6);chassis.quaternion.vmult(new C.Vec3(0,0,-1),mapForward);minimap.update(dt,chassis.position,mapForward);
+
  if(activeModel?.soil)canvas.dataset.soil=JSON.stringify(activeModel.soil.groups.map(g=>({mud:+g.state.mud.toFixed(3),dust:+g.state.dust.toFixed(3)})));
- if(chassis.position.y< -30||Math.abs(chassis.position.x)>testingGround.meta.size/2-4||Math.abs(chassis.position.z)>testingGround.meta.size/2-4){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));reset(nearestTrackPose([testingGround.meta.trail,...(testingGround.meta.routes||[]).map(r=>r.points)],chassis.position,forward)||spawnPoint);}
+ if(chassis.position.y<testingGround.heightAt(chassis.position.x,chassis.position.z)-30||chassis.position.x<testingGround.meta.bounds.minX+3||chassis.position.x>testingGround.meta.bounds.maxX-3||chassis.position.z<testingGround.meta.bounds.minZ+3||chassis.position.z>testingGround.meta.bounds.maxZ-3){const forward=chassis.quaternion.vmult(new C.Vec3(0,0,-1));reset(nearestTrackPose([testingGround.meta.trail,...(testingGround.meta.routes||[]).map(r=>r.points)],chassis.position,forward)||spawnPoint);}
 });
 
 // Unbranded, live cabin instruments placed over the supplied display surfaces.
@@ -193,7 +216,7 @@ function isCabinGlass(name){return /cabin_glass|windscreen|window|defrost|clear 
 function loadContainer(url,filename){return new Promise((resolve,reject)=>app.assets.loadFromUrlAndFilename(globalThis.offrideAssets?.url(url)||url,filename||url,'container',(err,asset)=>err?reject(Error(String(err))):resolve(asset)));}
 const vehicleProfiles={"suv": {"url": "./assets/vehicle.glb", "mass": 2500, "wheelbase": 2.856924, "track": 1.655536, "radius": 0.39975, "restLength": 0.36, "stiffness": 32, "compression": 4.8, "rebound": 4.2, "travel": 0.2, "engineForce": 3300, "brake": 42, "rideHeight": 0.54165, "rearDrive": false, "eye": [-0.43, 0.9, 0.25], "steeringPosition": [-0.4365, 0.70835, -0.34759], "collider": [0.94, 0.55, 2.25], "colliderOffset": [0, 0.39, 0], "display": [-0.436, 0.745, -0.53]}};
 // All vehicles share the SUV's driving tune, with model-specific wheel stations and hulls.
-vehicleProfiles.suv.label='SUV';
+vehicleProfiles.suv.label='SUV';vehicleProfiles.suv.bike=false;
 vehicleProfiles['range-rover']={...vehicleProfiles.suv,url:'./assets/range-rover.glb',label:'Range Rover',eye:[-.4161,.97634,.08615],steeringPosition:[-.41646,.64214,-.24931],displayEnabled:false};
 vehicleProfiles['defender-90']={...vehicleProfiles.suv,...{"url":"./assets/defender-90.glb","label":"Defender 90","wheelbase":2.378018319606781,"track":1.4823806583881378,"radius":0.39187463856789273,"rideHeight":0.5552340135678927,"eye":[-0.41010361909866333,1.1169065237045288,-0.15597257018089294],"displayEnabled":false,"hullWidth":0.9009276664257049,"hullLength":2.0507238006591795,"hullTop":1.447559959888458,"twoSidedBody":true}};
 vehicleProfiles['defender-grasmere']={...vehicleProfiles.suv,...{"url":"./assets/defender-grasmere.glb","label":"Defender Grasmere","wheelbase":2.794,"track":1.546542114726916,"radius":0.38943626630544675,"rideHeight":0.5527956413054468,"eye":[-0.39522233605384827,0.9149073362350464,-0.3852751851081848],"displayEnabled":false,"hullWidth":0.9047933995723724,"hullLength":2.2932025909423825,"hullTop":1.2130437088012695,"twoSidedBody":true,"steeringPosition":[-0.39522233605384827,0.6911845207214355,-0.5717108845710754],"steeringAxis":[0,0.34,-0.94]}};
@@ -232,6 +255,11 @@ vehicleProfiles.urus.steeringPosition=[-.43,.48,-.64];vehicleProfiles.urus.steer
 vehicleProfiles.safari.cockpitEye=[-.395,1.02,.12];vehicleProfiles.safari.eye=[-.395,1.02,.12];vehicleProfiles.safari.steeringPosition=[-.395,.76,-.42];
 vehicleProfiles.safari.display=[-.395,.79,-.64];vehicleProfiles.safari.displayEnabled=true;
 let activeVehicleId=vehicleProfiles[new URLSearchParams(location.search).get('vehicle')]?new URLSearchParams(location.search).get('vehicle'):'range-rover';
+Object.assign(vehicleProfiles,bikeProfiles);
+for(const [id,profile]of Object.entries(attachedFleetProfiles)){vehicleProfiles[id]={...vehicleProfiles.suv,...profile};const front=-profile.wheelbase/2-profile.radius,rear=profile.wheelbase/2+profile.radius;lampProfiles[id]=profile.lamps||{front:['Plain headlight lens'],rear:['Plain rear lamp'],f:[.25,profile.track*.65,.1,1.5,front-.7,front+.5],r:[.25,profile.track*.65,.1,1.6,rear-.5,rear+.8]};}
+applyVehicleNames(vehicleProfiles);
+for(const [id,profile]of Object.entries(vehicleProfiles))profile.truck=!!profile.truck||truckVehicleIds.has(id);
+const requestedVehicle=new URLSearchParams(location.search).get('vehicle');if(vehicleProfiles[requestedVehicle])activeVehicleId=requestedVehicle;
 function cycleVehicle(){const ids=Object.keys(vehicleProfiles);loadCar(ids[(ids.indexOf(activeVehicleId)+1)%ids.length]);}
 $('vehicle-toggle').onclick=cycleVehicle;
 addEventListener('keydown',e=>{if(!e.repeat&&e.code==='KeyV'&&!$('vehicle-picker').open&&!document.getElementById('online-dialog')?.open)cycleVehicle();});
@@ -242,16 +270,18 @@ const picker=createVehiclePicker(vehicleProfiles,id=>loadCar(id),open=>{keys.cle
 picker.update(activeVehicleId,false);
 function applyVehicleProfile(profile,preservePosition=false){
  const previousRideHeight=tuning.rideHeight;
- Object.assign(tuning,profile);chassis.mass=profile.mass;steeringAxis.set(...(profile.steeringAxis||[0,.65,.76])).normalize();
+ Object.assign(tuning,{cockpitPitch:.10},profile);chassis.mass=profile.mass;steeringAxis.set(...(profile.steeringAxis||[0,.65,.76])).normalize();
  for(const key of ['wheelbase','track','radius','restLength','travel'])tuning[key]=profile[key]*vehicleScale;
  tuning.eye=profile.cockpitEye.map(v=>v*vehicleScale);
- tuning.rideHeight=tuning.radius+tuning.restLength-9.81/(4*tuning.stiffness)-.12*vehicleScale;
+ tuning.rideHeight=tuning.radius+tuning.restLength-9.81/((profile.bike?2:4)*tuning.stiffness)-.12*vehicleScale;
  for(const shape of [...chassis.shapes])chassis.removeShape(shape);
  const hull=createSUVHull(profile.hullWidth,profile.hullLength,profile.hullTop);
  for(const v of hull.vertices)v.scale(vehicleScale,v);hull.updateBoundingSphereRadius();chassis.addShape(hull);
  chassis.updateBoundingRadius();chassis.updateMassProperties();
- const stations=[[-tuning.track/2,-tuning.wheelbase/2],[tuning.track/2,-tuning.wheelbase/2],[-tuning.track/2,tuning.wheelbase/2],[tuning.track/2,tuning.wheelbase/2]];
- vehicle.wheelInfos.forEach((w,i)=>{w.radius=tuning.radius;w.chassisConnectionPointLocal.set(stations[i][0],.12*vehicleScale,stations[i][1]);w.suspensionRestLength=tuning.restLength;w.suspensionLength=tuning.restLength;w.suspensionStiffness=tuning.stiffness;w.dampingCompression=tuning.compression;w.dampingRelaxation=tuning.rebound;w.maxSuspensionTravel=tuning.travel;w.rotation=0;w.deltaRotation=0;w.frictionSlip=2.5;});
+ if(profile.bike)configureBikeWheels(C,vehicle,profile,vehicleScale);else if(vehicle.wheelInfos.length!==4){vehicle.wheelInfos.length=0;for(let i=0;i<4;i++)vehicle.addWheel({radius:tuning.radius,directionLocal:new C.Vec3(0,-1,0),axleLocal:new C.Vec3(1,0,0),chassisConnectionPointLocal:new C.Vec3(),suspensionStiffness:tuning.stiffness,suspensionRestLength:tuning.restLength,dampingRelaxation:tuning.rebound,dampingCompression:tuning.compression,maxSuspensionForce:42000,maxSuspensionTravel:tuning.travel,frictionSlip:2.5,rollInfluence:.4});}
+ wheelState.length=vehicle.wheelInfos.length;for(let i=0;i<wheelState.length;i++)wheelState[i]={previousLength:tuning.restLength,length:tuning.restLength,previousSpin:wheelState[i]?.spin||0,spin:wheelState[i]?.spin||0,previousSteer:0,steer:0};
+ const stations=profile.bike?[[0,-tuning.wheelbase/2],[0,tuning.wheelbase/2]]:[[-tuning.track/2,-tuning.wheelbase/2],[tuning.track/2,-tuning.wheelbase/2],[-tuning.track/2,tuning.wheelbase/2],[tuning.track/2,tuning.wheelbase/2]];
+ vehicle.wheelInfos.forEach((w,i)=>{w.radius=profile.bike&&i===1?profile.rearRadius*vehicleScale:tuning.radius;w.chassisConnectionPointLocal.set(stations[i][0],.12*vehicleScale,stations[i][1]);w.suspensionRestLength=tuning.restLength;w.suspensionLength=tuning.restLength;w.suspensionStiffness=tuning.stiffness;w.dampingCompression=tuning.compression;w.dampingRelaxation=tuning.rebound;w.maxSuspensionTravel=tuning.travel;w.rotation=0;w.deltaRotation=0;w.frictionSlip=2.5;});
  dashboardDisplay.enabled=profile.displayEnabled!==false;dashboardDisplay.setLocalPosition(...profile.display.map(v=>v*vehicleScale));dashboardDisplay.setLocalScale(.34*vehicleScale,1,.145*vehicleScale);
  if(preservePosition){
   // Keep road position, heading and momentum; only accommodate the new body's ride height.
@@ -276,31 +306,32 @@ async function loadCar(id='range-rover',authoritative=false){
     for(const x of [-.64,.02,.34,.63]){box('Air vent',[x,.635,-.435],[.13,.062,.012],recess);for(let i=-1;i<=1;i++)box('Vent slat',[x,.635+i*.015,-.426],[.115,.004,.005],trim);}
     box('Dashboard satin strip',[.30,.685,-.453],[.74,.015,.015],trim);
    }
-   const wheels=['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR'].map(n=>model.findByName(n));
+   const wheels=(profile.bike?['Wheel_F','Wheel_R']:['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR']).map(n=>model.findByName(n));
    if(!wheels.every(Boolean))throw Error('Vehicle is missing a wheel assembly');
-   const brakes=['Brake_FL','Brake_FR','Brake_RL','Brake_RR'].map(n=>model.findByName(n));
+   const brakes=(profile.bike?['Brake_F','Brake_R']:['Brake_FL','Brake_FR','Brake_RL','Brake_RR']).map(n=>model.findByName(n));
    preparing.wheels=wheels;preparing.brakes=brakes;
    for(const part of [...wheels,...brakes])if(part){part.reparent(app.root);part.setLocalScale(vehicleScale,vehicleScale,vehicleScale);}
    for(const part of [model,...wheels,...brakes])if(part)part.enabled=false;
-   for(const materialAsset of asset.resource.materials){const m=materialAsset.resource;const name=m.name.toLowerCase();m.useDynamicRefraction=false;m.refraction=0;if(profile.twoSidedBody)m.cull=pc.CULLFACE_NONE;m.update();if(isCabinGlass(name)){m.diffuse.set(.55,.68,.78);m.diffuseMap=null;m.opacityMap=null;m.blendType=pc.BLEND_NORMAL;m.opacity=.18;m.depthWrite=false;m.cull=pc.CULLFACE_NONE;m.update();}if(name.includes('bodywork')||name.includes('car_paint')){m.clearCoat=.8;m.clearCoatGloss=.93;m.update();}}
+   for(const materialAsset of asset.resource.materials){const m=materialAsset.resource;const name=m.name.toLowerCase();m.useDynamicRefraction=false;m.refraction=0;if(profile.twoSidedBody)m.cull=pc.CULLFACE_NONE;m.update();if(isCabinGlass(name)){if(!profile.originalMaterials){m.diffuse.set(.55,.68,.78);m.diffuseMap=null;m.opacityMap=null;m.blendType=pc.BLEND_NORMAL;m.opacity=.18;}m.depthWrite=false;m.cull=pc.CULLFACE_NONE;m.update();}if(name.includes('bodywork')||name.includes('car_paint')){m.clearCoat=.8;m.clearCoatGloss=.93;m.update();}}
    solidifyWheelSurfaces(pc,model,wheels,brakes);
    if(id==='suv')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/^Detail \d+$/i.test(m.name)){m.diffuse.set(.72,.77,.80);m.metalness=1;m.gloss=.87;m.useMetalness=true;m.update();}if(/bodywork/i.test(m.name)){m.diffuse.set(.009,.011,.013);m.diffuseMap=null;m.metalness=.03;m.gloss=.10;m.clearCoat=0;m.update();}}
    if(id==='range-rover')for(const assetMaterial of asset.resource.materials){const m=assetMaterial.resource;if(/interior(018|005|010)1Mtl$/i.test(m.name)){m.diffuse.mulScalar(.18);m.update();}}
-   const glassInstances=model.findComponents('render').flatMap(r=>r.meshInstances).filter(mi=>isCabinGlass(mi.material.name));entry={asset,lease,model,wheels,brakes,glassInstances,steering:model.findByName('Steering'),steeringRest:null};drivingSoil.attach(entry,profile,vehicleScale,isCabinGlass);if(storedSoil.has(id))entry.soil.groups.forEach((g,i)=>Object.assign(g.state,storedSoil.get(id)[i]));modelCache.set(id,entry);preparing=null;
+   const glassInstances=model.findComponents('render').flatMap(r=>r.meshInstances).filter(mi=>isCabinGlass(mi.material.name));entry={asset,lease,model,wheels,brakes,glassInstances,steering:model.findByName(profile.bike?'Handlebars':'Steering'),steeringRest:null};drivingSoil.attach(entry,profile,vehicleScale,isCabinGlass);if(storedSoil.has(id))entry.soil.groups.forEach((g,i)=>Object.assign(g.state,storedSoil.get(id)[i]));if(profile.bike){const riderAsset=await loadContainer('./assets/bike-rider.glb');entry.rider=createBikeRider(pc,riderAsset.resource.instantiateRenderEntity(),bodyVisual,profile,vehicleScale,testingGround);entry.rider.root.enabled=false;}modelCache.set(id,entry);preparing=null;
   }
+  if(activeModel?.rider)activeModel.rider.root.enabled=false;
   if(activeModel)for(const part of [activeModel.model,...activeModel.wheels,...activeModel.brakes])if(part)part.enabled=false;
   activeModel=entry;for(const mi of entry.glassInstances)mi.visible=view!==2;for(const part of [entry.model,...entry.wheels,...entry.brakes])if(part)part.enabled=true;
   // Keep only three heavy models resident; preserve soil levels when an old car reloads.
   modelCache.delete(id);modelCache.set(id,entry);
   while(modelCache.size>3){const [oldId,old]=modelCache.entries().next().value;modelCache.delete(oldId);
    storedSoil.set(oldId,old.soil.groups.map(g=>({...g.state})));
-   vehicleLights.destroy(old);for(const part of [old.model,...old.wheels,...old.brakes])if(part)part.destroy();
+   old.rider?.destroy();vehicleLights.destroy(old);for(const part of [old.model,...old.wheels,...old.brakes])if(part)part.destroy();
    old.lease.release();
   }
   if(!entry.lights)vehicleLights.attach(entry,id);vehicleAudio.select(id);
-  activeVehicleId=id;const url=new URL(location.href);url.searchParams.set('vehicle',id);history.replaceState(null,'',url);$('vehicle-toggle').textContent='V · '+profile.label;
+  activeVehicleId=id;cameraDistance=profile.bike?5.8:profile.truck?12:10;const url=new URL(location.href);url.searchParams.set('vehicle',id);history.replaceState(null,'',url);$('vehicle-toggle').textContent='V · '+profile.label;
   loadedWheels=entry.wheels;loadedBrakes=entry.brakes;steeringVisual=entry.steering;if(steeringVisual){steeringVisual.setLocalPosition(...profile.steeringPosition);entry.steeringRest??=steeringVisual.getLocalRotation().clone();}
-  for(const w of wheelVisuals)w.enabled=false;applyVehicleProfile(profile,modelReady);driver.fit(profile,vehicleScale);driver.update(steering,view);modelReady=true;if(pendingNetworkPose){reset(pendingNetworkPose);pendingNetworkPose=null;}
+  for(const w of wheelVisuals)w.enabled=false;applyVehicleProfile(profile,modelReady);driver.fit(profile,vehicleScale);if(view===2)selectCamera(2);driver.update(steering,view);modelReady=true;if(pendingNetworkPose){reset(pendingNetworkPose);pendingNetworkPose=null;}
   $('status').textContent=profile.label+' ready. Follow the mountain trail. F for driver seat.';
  }catch(e){if(preparing){for(const part of [preparing.model,...preparing.wheels||[],...preparing.brakes||[]])part?.destroy();preparing.lease.release();}$('status').textContent='Could not load vehicle: '+e.message;$('error').hidden=false;$('error').textContent=$('status').textContent;console.error(e);}
  finally{carLoading=false;picker.update(activeVehicleId,false);$('more-vehicles').disabled=networkLock.vehicle;$('vehicle-toggle').disabled=false;$('vehicle-toggle').textContent='V · '+vehicleProfiles[activeVehicleId].label;}
@@ -325,8 +356,8 @@ online=createMultiplayer({
  onLock:state=>{Object.assign(networkLock,state);$('more-vehicles').disabled=state.vehicle||carLoading;$('reset-track').disabled=state.freeze;},
  onMenu:open=>{keys.clear();paused=open||$('vehicle-picker').open;if(open){softMouseLook=false;canvas.style.cursor='grab';}},
  remotes:remoteDrivers,
- showCheckpoint:gate=>{checkpoint.enabled=!!gate?.point;if(gate?.point){const p=gate.point;checkpoint.setPosition(p[0],testingGround.heightAt(p[0],p[2])+.03,p[2]);if(gate.next)checkpoint.setEulerAngles(0,Math.atan2(gate.next[0]-p[0],gate.next[2]-p[2])*180/Math.PI,0);}}
+ showCheckpoint:gate=>{minimap.setCheckpoint(gate);checkpoint.enabled=!!gate?.point;if(gate?.point){const p=gate.point;checkpoint.setPosition(p[0],testingGround.heightAt(p[0],p[2])+.03,p[2]);if(gate.next)checkpoint.setEulerAngles(0,Math.atan2(gate.next[0]-p[0],gate.next[2]-p[2])*180/Math.PI,0);}}
 });
 
 
-globalThis.offrideLoading?.stage(99,'Compiling the first frame');app.once('postrender',()=>globalThis.offrideLoading?.complete());
+globalThis.offrideLoading?.stage(99,'Preparing sounds and the first frame');await Promise.all([vehicleAudio.prepare(),document.fonts?.ready,globalThis.offrideAssets?.whenReady?.()]);app.once('postrender',()=>{starting=false;keys.clear();globalThis.offrideLoading?.complete();});

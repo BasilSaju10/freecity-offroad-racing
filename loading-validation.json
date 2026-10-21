@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "vehicles": 27,
+  "audioClips": 6,
+  "coreFiles": 124,
+  "nativeTextureFiles": 120,
+  "fallbackTextureFiles": 120,
+  "nativeRequiredMB": 990.9,
+  "fallbackRequiredMB": 999.2,
+  "allModelImagesCovered": true,
+  "warmCacheNoDownloads": true,
+  "deduplicatedRequests": true,
+  "quotaFallback": true,
+  "partialDownloadsRejected": true
+}

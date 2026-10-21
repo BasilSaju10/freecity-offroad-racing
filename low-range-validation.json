@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "lowMaxKmh": 15.000000000000005,
+  "highMaxKmh": 79.12064579523019,
+  "slopeDegrees": 35,
+  "lowClimbMetres": 4.11337370173836,
+  "highClimbMetres": 0.03538030705053111,
+  "downhillMaxKmh": 5.593308661707698,
+  "minimapCoordinateMapping": true
+}

@@ -1,18 +1,19 @@
 import {randomBytes,randomUUID} from 'node:crypto';
 import {WebSocketServer,WebSocket} from 'ws';
 
-export const vehicleIds=['suv','range-rover','defender-90','defender-grasmere','ram-trx','fortuner','gladiator','sierra','g63','raptor','everest','safari','hilux','urus','sterrato'];
+export const vehicleIds=['suv','range-rover','defender-90','defender-grasmere','ram-trx','fortuner','gladiator','sierra','g63','raptor','everest','safari','hilux','urus','sterrato',"trail-hauler","desert-patrol","rock-buggy","trail-scout","gortuner-classic","summit-coupe","rock-ranger","expedition-hauler","obsidian-4x4","trail-mini"];
 const safeName=v=>String(v||'Driver').replace(/[\p{C}<>]/gu,'').trim().slice(0,24)||'Driver';
 const distance=(a,b)=>Math.hypot(a[0]-b[0],a[2]-b[2]);
 // Resample a continuous section of the existing trail: gates never jump between roads.
 export function makeCourse(meta,random=Math.random){
- const trail=meta.trail, cumulative=[0];for(let i=1;i<trail.length;i++)cumulative.push(cumulative.at(-1)+Math.hypot(trail[i].x-trail[i-1].x,trail[i].z-trail[i-1].z));
- const total=cumulative.at(-1),length=Math.min(total,650+random()*450),offset=random()*Math.max(0,total-length),reverse=random()<.5;
+ const gutter=meta.id==='gamblers-gutter',choices=gutter?(meta.routes||[]).map(r=>r.points).filter(points=>points.reduce((sum,p,i)=>i?sum+Math.hypot(p.x-points[i-1].x,p.z-points[i-1].z):0,0)>250):[];
+ const trail=choices.length?choices[Math.min(choices.length-1,Math.floor(random()*choices.length))]:meta.trail,cumulative=[0];for(let i=1;i<trail.length;i++)cumulative.push(cumulative.at(-1)+Math.hypot(trail[i].x-trail[i-1].x,trail[i].z-trail[i-1].z));
+ const total=cumulative.at(-1),length=gutter?total*(.80+random()*.19):Math.min(total,650+random()*450),offset=random()*Math.max(0,total-length),reverse=random()<.5;
  function sample(d){let i=1;while(i<cumulative.length-1&&cumulative[i]<d)i++;const a=trail[i-1],b=trail[i],t=(d-cumulative[i-1])/(cumulative[i]-cumulative[i-1]||1);return[a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,a.z+(b.z-a.z)*t];}
  const path=Array.from({length:11},(_,i)=>sample(offset+length*(reverse?1-i/10:i/10))),[a,b]=path,dx=b[0]-a[0],dz=b[2]-a[2],norm=Math.hypot(dx,dz);
  // Use the immediate trail tangent for a grid aligned with the road, including bends.
  const near=sample(offset+length*(reverse?1:0)+(reverse?-1:1)),fx=near[0]-a[0],fz=near[2]-a[2],n=Math.hypot(fx,fz)||norm;
- return {name:`Mountain sprint ${Math.round(offset)}${reverse?' reverse':''}`,checkpoints:path.slice(1),radius:15,start:{x:a[0],y:a[1],z:a[2],yaw:Math.atan2(-fx,-fz)},forward:[fx/n,fz/n]};
+ return {name:`${gutter?'Gutter':'Mountain'} sprint ${Math.round(offset)}${reverse?' reverse':''}`,checkpoints:path.slice(1),radius:gutter?Math.min(15,length/30):15,start:{x:a[0],y:a[1],z:a[2],yaw:Math.atan2(-fx,-fz)},forward:[fx/n,fz/n]};
 }
 export function attachMultiplayer(server,meta,{now=Date.now,autoTick=true,allowedOrigins=[],random=Math.random}={}){
  const wss=new WebSocketServer({noServer:true,maxPayload:4096,perMessageDeflate:false}),players=new Map(),rooms=new Map(),sockets=new Map(),course={start:meta.spawn,forward:[-Math.sin(meta.spawn.yaw),-Math.cos(meta.spawn.yaw)]};let closing=false,lastDirectory=0;const invitations=new Map();

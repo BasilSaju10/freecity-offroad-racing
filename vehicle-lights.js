@@ -2,6 +2,8 @@ import emissive from './vendor/playcanvas/scene/shader-lib/glsl/chunks/standard/
 // Mesh material names and lamp extents measured from each imported GLB, in chassis metres.
 // Regions use absolute X, so both existing left/right lamps glow without added geometry.
 export const lampProfiles={
+ 'africa-twin':{front:['headlight','lights','foglights'],rear:['lights','red'],f:[0,.22,.30,1.1,-1.0,-.4],r:[0,.25,.20,.9,.6,1.4]},
+ 'stark-varg':{front:[],rear:[],f:[0,.1,.5,.8,-.7,-.5],r:[0,.1,.4,.6,.6,.9]},
  suv:{front:['Clear automotive glass.001','Detail 14'],rear:['Rear lamp'],f:[.56,.98,.36,.60,-2.26,-1.79],r:[.37,.93,.60,.77,2.15,2.55]},
  'range-rover':{front:['frontlights','Meshesrowersportglass1Mtl'],rear:['rearlights','Meshesrowersportglass0011Mtl'],f:[.45,.91,.17,.42,-2.18,-1.87],r:[.69,.91,.23,.51,2.22,2.49]},
  'defender-90':{front:['Headlights'],rear:['Taillights'],f:[.45,.85,.26,.52,-1.76,-1.48],r:[.47,.85,.20,.33,1.65,1.90]},
@@ -18,7 +20,7 @@ export const lampProfiles={
  urus:{front:['Light ','Material.006','Material.004'],rear:['Light RED'],f:[.46,.94,.21,.40,-2.38,-1.82],r:[.40,.88,.41,.54,2.04,2.37]},
  sterrato:{front:['LightA'],rear:['RED_GLASS','LightA'],f:[.46,.83,-.10,.19,-2.12,-1.73],r:[.39,.97,.23,.42,1.66,2.02]}
 };
-const header=`uniform mat4 uLampInverse; uniform vec4 uLampPower;
+const header=`uniform mat4 uLampInverse; uniform vec4 uLampPower; uniform float uLampTexturedLens;
 uniform vec3 uLampFrontMin; uniform vec3 uLampFrontMax; uniform vec3 uLampRearMin; uniform vec3 uLampRearMax;
 float lampRegion(vec3 p,vec3 lo,vec3 hi){vec3 a=step(lo,p)*step(p,hi);return a.x*a.y*a.z;}
 `;
@@ -26,7 +28,11 @@ const shader=header+emissive.replace('void getEmission()','void getOriginalEmiss
 void getEmission(){getOriginalEmission();vec3 p=(uLampInverse*vec4(vPositionW,1.0)).xyz;p.x=abs(p.x);
 float front=lampRegion(p,uLampFrontMin,uLampFrontMax)*uLampPower.z;
 float rear=lampRegion(p,uLampRearMin,uLampRearMax)*uLampPower.w;
-dEmission+=vec3(.88,.95,1.0)*front*uLampPower.x+vec3(1.0,.012,.004)*rear*uLampPower.y;}
+// Preserve the supplied lens pattern; the black background of a lamp atlas stays dark.
+vec3 lens=pow(max(dAlbedo,vec3(0.0)),vec3(.65));
+vec3 head=mix(vec3(.88,.95,1.0),lens,uLampTexturedLens);
+vec3 stop=mix(vec3(1.0,.012,.004),lens*vec3(1.0,.06,.015),uLampTexturedLens);
+dEmission+=head*front*uLampPower.x+stop*rear*uLampPower.y;}
 `;
 export function createVehicleLights(pc){
  const patched=new WeakSet();
@@ -34,7 +40,7 @@ export function createVehicleLights(pc){
  return {attach(entry,id){const profile=lampProfiles[id],inverse=new pc.Mat4(),lamps=[];if(!profile)throw Error('No lamp profile for '+id);const [fmin,fmax]=bounds(profile.f),[rmin,rmax]=bounds(profile.r);
   for(const render of entry.model.findComponents('render'))for(const mi of render.meshInstances){const m=mi.material,name=m.name,front=profile.front.some(s=>name.includes(s)),rear=profile.rear.some(s=>name.includes(s));if(!front&&!rear)continue;
    // Clone per mesh: other vehicles using the same source material keep their own state.
-   const lit=m.clone();lit.name=m.name+' · working lamps';mi.material=lit;lit.emissive.set(0,0,0);lit.getShaderChunks(pc.SHADERLANGUAGE_GLSL).set('emissivePS',shader);lit.shaderChunksVersion='2.24';lit.setParameter('uLampInverse',inverse.data);lit.setParameter('uLampPower',new Float32Array([0,0,Number(front),Number(rear)]));lit.setParameter('uLampFrontMin',fmin);lit.setParameter('uLampFrontMax',fmax);lit.setParameter('uLampRearMin',rmin);lit.setParameter('uLampRearMax',rmax);lit.update();lamps.push({mi,material:lit,power:new Float32Array([0,0,Number(front),Number(rear)])});
+   const lit=m.clone();lit.name=m.name+' · working lamps';mi.material=lit;lit.emissive.set(0,0,0);lit.getShaderChunks(pc.SHADERLANGUAGE_GLSL).set('emissivePS',shader);lit.shaderChunksVersion='2.24';lit.setParameter('uLampTexturedLens',profile.texturedLens&&m.diffuseMap?1:0);lit.setParameter('uLampInverse',inverse.data);lit.setParameter('uLampPower',new Float32Array([0,0,Number(front),Number(rear)]));lit.setParameter('uLampFrontMin',fmin);lit.setParameter('uLampFrontMax',fmax);lit.setParameter('uLampRearMin',rmin);lit.setParameter('uLampRearMax',rmax);lit.update();lamps.push({mi,material:lit,sourceOpacity:m.opacity,solidLens:profile.texturedLens&&m.opacity<.99,power:new Float32Array([0,0,Number(front),Number(rear)])});
   }entry.lights={inverse,lamps};return lamps.length;
- },update(entry,headlights,braking){if(!entry?.lights)return;const {inverse,lamps}=entry.lights;inverse.copy(entry.model.getWorldTransform()).invert();for(const lamp of lamps){lamp.power[0]=headlights?5.5:0;lamp.power[1]=braking?6:headlights?.65:0;lamp.mi.setParameter('uLampInverse',inverse.data);lamp.mi.setParameter('uLampPower',lamp.power);}},destroy(entry){for(const lamp of entry.lights?.lamps||[])lamp.material.destroy();}};
+ },update(entry,headlights,braking){if(!entry?.lights)return;const {inverse,lamps}=entry.lights;inverse.copy(entry.model.getWorldTransform()).invert();for(const lamp of lamps){if(lamp.solidLens){const glowing=(lamp.power[2]&&headlights)||(lamp.power[3]&&(braking||headlights)),opacity=glowing?1:lamp.sourceOpacity;if(lamp.material.opacity!==opacity){lamp.material.opacity=opacity;lamp.material.update();}}lamp.power[0]=headlights?5.5:0;lamp.power[1]=braking?6:headlights?.65:0;lamp.mi.setParameter('uLampInverse',inverse.data);lamp.mi.setParameter('uLampPower',lamp.power);}},destroy(entry){for(const lamp of entry.lights?.lamps||[])lamp.material.destroy();}};
 }

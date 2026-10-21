@@ -1,0 +1,106 @@
+{
+  "wheelbase": 1.65961,
+  "radius": 0.359,
+  "rearRadius": 0.349,
+  "rideHeight": 0.3895133928571428,
+  "wheelCenters": [
+    [
+      -0.00016,
+      -0.026653392857142855,
+      -0.82981
+    ],
+    [
+      3e-05,
+      -0.041103392857142845,
+      0.82981
+    ]
+  ],
+  "forkOrigin": [
+    -0.00016,
+    -0.026653392857142855,
+    -0.82981
+  ],
+  "swingOrigin": [
+    0.0,
+    0.12226660714285716,
+    0.30505
+  ],
+  "barOrigin": [
+    0.0,
+    0.5622666071428571,
+    -0.46495
+  ],
+  "seat": [
+    0,
+    0.4904866071428572,
+    0.22
+  ],
+  "grips": [
+    [
+      -0.357,
+      0.8222666071428573,
+      -0.1789463069438934
+    ],
+    [
+      0.357,
+      0.8222666071428573,
+      -0.1789463069438934
+    ]
+  ],
+  "pegs": [
+    [
+      -0.22,
+      -0.00951339285714281,
+      0.08
+    ],
+    [
+      0.22,
+      -0.00951339285714281,
+      0.08
+    ]
+  ],
+  "mass": 310,
+  "electric": false,
+  "bike": true,
+  "url": "./assets/africa-twin.glb",
+  "label": "Honda Africa Twin",
+  "track": 0,
+  "restLength": 0.26,
+  "stiffness": 40,
+  "compression": 4.8,
+  "rebound": 5.8,
+  "travel": 0.24,
+  "engineForce": 900,
+  "brake": 22,
+  "rearDrive": true,
+  "hullWidth": 0.21,
+  "hullLength": 0.68,
+  "hullTop": 0.48,
+  "twoSidedBody": true,
+  "cockpitEye": [
+    0,
+    1.02,
+    0.22
+  ],
+  "eye": [
+    0,
+    1.02,
+    0.22
+  ],
+  "steeringPosition": [
+    0.0,
+    0.5622666071428571,
+    -0.46495
+  ],
+  "steeringAxis": [
+    0,
+    1,
+    0
+  ],
+  "display": [
+    0,
+    0.5,
+    -0.4
+  ],
+  "displayEnabled": false
+}

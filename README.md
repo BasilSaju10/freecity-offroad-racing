@@ -1,3 +1,17 @@
+# Complete OFFRIDE game snapshot
+
+This branch contains the current game with Gambler's Gutter, its full-resolution textures, 25 cars/trucks, 2 motorcycles, sounds, minimap, high/low gear, and automatic day/night weather. The current map uses 50% fewer standing trees.
+
+To run the source: install Node.js 22 or newer, run `npm ci --include=dev`, then `npm run build`, then `npm start`. Open `http://127.0.0.1:5173`. For a solo loopback preview set `HOST=127.0.0.1` and `OFFRIDE_LOCAL_ONLY=1` before starting.
+
+The complete ready-to-run ZIP is attached to the GitHub release. Extract it, install Node.js if needed, and use `START-OFFRIDE.cmd`; it opens the local game on port 5177 without requiring npm install or a build.
+
+The latest loading preparation downloads all 27 vehicle files and the required map textures before play, decodes all six sounds, and reuses valid versioned files on later visits. `npm test` validates the full game.
+
+This snapshot is on a separate branch; the Render production branch is unchanged. Original source and asset notices are retained below and in VEHICLE-NOTES.md.
+
+---
+
 # OFFRIDE
 
 Play online: https://awd-offroad.onrender.com/
@@ -52,3 +66,9 @@ Vehicle/model editing details, supplied asset information and original rights no
 - Spatial render chunks are hidden beyond 265 m behind fog that becomes opaque at 240 m; camera clipping is 280 m. Shadow resolution/distance, reflections, mud, dust, smoke, water and vehicle physics retain their existing settings.
 
 Run `npm run build` after editing source/assets. `npm start` builds automatically only if the generated manifest or bundle is missing. Render's build command is `npm ci --include=dev && npm run build`; start command is `npm start`. Generated bundles and compressed transfers are build outputs, not source-control assets.
+
+
+Active local map: Gambler’s Gutter by OwnTheBanks, supplied by the user. The standing-tree placements are reduced from 5,410 to 2,705. Assets live in assets/gamblers; the old map is retained as an unused reference and is excluded from downloads. Original texture resolution is retained, BC7 blocks/mipmaps are used directly when supported, and BC4/BC5 texture channels are shared without RGBA expansion. Two source references are absent from the uploaded ZIP: t_gray_bt.png and garbage_n.dds; those channels use neutral/geometric fallback values. Terrain rendering uses OFFRIDE’s renderer rather than BeamNG’s shader implementation. Fog ends at 145 m, scenery chunks cull at 170 m, and the camera clips at 180 m. Run npm run test:map for active-map collision, reset, asset, and race-course checks.
+
+
+Loading optimization: the loading screen now waits for all 27 vehicle files, all map geometry, the active GPU texture format, six decoded audio clips, fonts, and the first frame. Completed versioned downloads are retained across launches, partial files are rejected, and an embedded-browser compatible buffered cache write is available when streaming cache writes are unsupported. Stale entries are pruned only inside the game cache. Run npm run test:loading for dependency coverage, warm-cache reuse, incomplete-download rejection, storage fallback, and audio preparation checks. Rendering settings, map textures, vehicle handling, gear limits and HUD are unchanged.

@@ -1,0 +1,52 @@
+{
+  "desert-patrol": {
+    "originalTextureBytesMatch": {
+      "torpeda.0": true,
+      "krisla.0": true
+    },
+    "primarySourceColour": [
+      0.06134453043341637,
+      0.09645991027355194,
+      0.027324587106704712,
+      1
+    ],
+    "interiorSourceColour": [
+      0.020378800109028816,
+      0.020378800109028816,
+      0.020378800109028816,
+      1
+    ]
+  },
+  "obsidian-4x4": {
+    "originalTextureBytesMatch": {
+      "leather02_weave_18.002": true,
+      "leather02_weave_26.002": true
+    },
+    "plastic5_17.002SourceColour": [
+      0,
+      0.061165701597929,
+      0.8004239797592163,
+      1
+    ]
+  },
+  "trail-mini": {
+    "originalTextureBytesMatch": {
+      "Mat.6": true,
+      "Mat.7": true
+    },
+    "bleuSourceColour": [
+      0.07227185368537903,
+      0.10461648553609848,
+      0.1441284716129303,
+      1
+    ]
+  },
+  "trail-scout": {
+    "fixedSpareMesh": true,
+    "sourceUsesColourMaterialsWithoutImageTextures": true
+  },
+  "rock-buggy": {
+    "centredSingleSeat": true,
+    "originalTexturesExceptSponsorLivery": true
+  }
+}

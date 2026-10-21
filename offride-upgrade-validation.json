@@ -4,11 +4,11 @@
   "connections": 5,
   "matchingRouteCollision": true,
   "oldBannersRemoved": true,
-  "all15CarsPreloaded": true,
+  "all27VehiclesPreloaded": true,
   "losslessTransport": true,
   "shadowQualityUnchanged": true,
-  "drawDistanceMeters": 280,
-  "fogEndMeters": 240,
+  "drawDistanceMeters": 180,
+  "fogEndMeters": 145,
   "frontAndRearLetterFacesRemoved": {
     "front": 2232,
     "back": 1392

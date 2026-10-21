@@ -17,6 +17,7 @@ class Mesh{setPositions(p){this.positions=p;}setNormals(n){assert(n.every(Number
 const pc={Entity,StandardMaterial:Material,Color:class{constructor(...v){this.values=v;}set(...v){this.values=v;}},Mesh,MeshInstance:class{constructor(mesh,material){this.mesh=mesh;this.material=material;}},calculateNormals,Vec3,Quat,CULLFACE_NONE:0,BLEND_NORMAL:2,PRIMITIVE_TRIANGLES:4};
 const source=readFileSync('main.js','utf8'),profiles=new Function(source.slice(source.indexOf('const vehicleProfiles='),source.indexOf('let activeVehicleId='))+'return vehicleProfiles;')();
 const driver=createHelmetDriver(pc,{graphicsDevice:{}},new Entity('Vehicle'));
+const importedHands=new Entity('Supplied hands');driver.attachHands(importedHands);driver.fit({...profiles.suv,bike:true},1.12);driver.update(0,2);assert(!importedHands.enabled,'car steering hands must not overlay motorcycle grips');driver.fit(profiles.suv,1.12);driver.update(0,0);assert(importedHands.enabled,'returning to a car restores its supplied hands');
 const all=e=>[e,...e.children.flatMap(all)],parts=all(driver.root);assert(parts.some(p=>p.name==='Helmet visor'));assert(parts.some(p=>p.name==='Face'));assert(parts.some(p=>p.name==='Gloved hand'));
 assert.equal(parts.filter(p=>p.name.startsWith('Finger ')).length,24);assert.equal(parts.filter(p=>p.name.startsWith('Thumb segment')).length,4);
 for(const profile of Object.values(profiles)){

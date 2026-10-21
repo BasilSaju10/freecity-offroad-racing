@@ -1,0 +1,3 @@
+export const truckVehicleIds=new Set(['ram-trx','sierra','raptor','hilux','gladiator','trail-hauler','expedition-hauler']);
+export function vehicleSpeedLimit(profile){return (profile.lowRange?15:profile.bike?90:profile.truck?70:80)/3.6;}
+export function enforceVehicleSpeedLimit(body,profile,grounded=false){const includeVertical=profile.lowRange&&grounded,speed=Math.hypot(body.velocity.x,includeVertical?body.velocity.y:0,body.velocity.z),limit=vehicleSpeedLimit(profile);if(speed>limit){const amount=limit/speed;body.velocity.x*=amount;body.velocity.z*=amount;if(includeVertical)body.velocity.y*=amount;}}

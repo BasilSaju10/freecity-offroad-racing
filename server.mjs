@@ -5,10 +5,10 @@ import {fileURLToPath} from 'node:url';
 import {resolve,extname,sep,relative} from 'node:path';
 import {attachMultiplayer} from './multiplayer-server.mjs';
 const root=fileURLToPath(new URL('.',import.meta.url));
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.bin':'application/octet-stream','.wav':'audio/wav','.mp3':'audio/mpeg'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.glb':'model/gltf-binary','.dds':'application/octet-stream','.png':'image/png','.jpg':'image/jpeg','.bin':'application/octet-stream','.wav':'audio/wav','.mp3':'audio/mpeg'};
 let manifest={files:[]};try{manifest=JSON.parse(await readFile(new URL('./asset-manifest.json',import.meta.url)));}catch{}
 const assets=new Map(manifest.files.map(f=>[f.path,f]));
-const meta=JSON.parse(await readFile(new URL('./assets/map/physics.json',import.meta.url)));
+const meta=JSON.parse(await readFile(new URL('./assets/gamblers/physics.json',import.meta.url)));
 export const server=createServer(async(req,res)=>{try{
  if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405);res.end();return;}
  const url=new URL(req.url,'http://localhost');if(url.pathname==='/healthz'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true}));return;}
@@ -22,7 +22,7 @@ export const server=createServer(async(req,res)=>{try{
  const asset=assets.get(rel.replaceAll('\\','/')),versioned=asset&&url.searchParams.get('v')===asset.hash,etag='"'+(asset?.hash||info.size+'-'+Math.floor(info.mtimeMs))+'"';
  const headers={'Content-Type':types[extname(path)],'Cache-Control':versioned?'public, max-age=31536000, immutable':'no-cache','ETag':etag,'Vary':'Accept-Encoding','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'};
  if(req.headers['if-none-match']===etag){res.writeHead(304,headers);res.end();return;}
- if(asset&&/\bgzip\b/.test(req.headers['accept-encoding']||'')){path=resolve(root,'.compressed',asset.hash+'.gz');info=await stat(path);headers['Content-Encoding']='gzip';}
+ if(asset&&asset.gzip!==false&&/\bgzip\b/.test(req.headers['accept-encoding']||'')){path=resolve(root,'.compressed',asset.hash+'.gz');info=await stat(path);headers['Content-Encoding']='gzip';}
  headers['Content-Length']=info.size;res.writeHead(200,headers);
  if(req.method==='HEAD')res.end();else{const stream=createReadStream(path);stream.on('error',()=>res.destroy());stream.pipe(res);}
  }catch{if(!res.headersSent)res.writeHead(404);res.end('Not found');}});
