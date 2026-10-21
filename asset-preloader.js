@@ -4,15 +4,16 @@ export function createAssetPreloader({files,baseUrl,cache=null,fetcher=fetch,onP
  const byPath=new Map(files.map(f=>[f.path,f])),ready=new Set(),pending=new Map(),memory=new Map(),received=new Map();
  const stats={downloads:0,cacheHits:0,memoryFiles:0,networkBytes:0};let writable=!!cache,streamWrites=true;
  const absolute=file=>new URL(file.url,baseUrl).href;
+ const networkUrl=file=>{const url=new URL(absolute(file));url.searchParams.set('offride-download','1');return url.href;};
  async function request(file){
   const size=4*1024*1024;
-  if(file.bytes<=size)return fetcher(absolute(file),{cache:'no-store'});
+  if(file.bytes<=size)return fetcher(networkUrl(file),{cache:'no-store'});
   // Static hosting supports byte ranges. Retry a short segment instead of
   // restarting a 50 MB vehicle when a connection drops near the end.
   async function segment(start){
    const end=Math.min(file.bytes-1,start+size-1);let error;
    for(let attempt=0;attempt<4;attempt++)try{
-    const response=await fetcher(absolute(file),{cache:'no-store',headers:{Range:`bytes=${start}-${end}`}});
+    const response=await fetcher(networkUrl(file),{cache:'no-store',headers:{Range:`bytes=${start}-${end}`}});
     if(start===0&&response.status===200)return {response};
     if(response.status!==206||response.headers.get('Content-Range')!==`bytes ${start}-${end}/${file.bytes}`)throw Error('Invalid partial download');
     const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length!==end-start+1)throw Error('Incomplete download segment');
