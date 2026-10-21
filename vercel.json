@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "node",
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci --include=dev",
+  "functions": {
+    "server.mjs": {
+      "includeFiles": "{assets/**,.compressed/**,app.bundle.js,asset-manifest.json,*.css,*.js,*.html,robots.txt,sitemap.xml}"
+    }
+  }
+}
