@@ -28,5 +28,5 @@ export const server=createServer(async(req,res)=>{try{
  }catch{if(!res.headersSent)res.writeHead(404);res.end('Not found');}});
 export const multiplayer=attachMultiplayer(server,meta);
 export default server;
-const port=Number(process.env.PORT||5173);server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log(`OFFRIDE multiplayer ready on port ${port}`));
+const port=Number(process.env.PORT||5173);if(process.env.VERCEL!=='1')server.listen(port,process.env.HOST||'0.0.0.0',()=>console.log(`OFFRIDE multiplayer ready on port ${port}`));
 let stopping=false;function shutdown(){if(stopping)return;stopping=true;multiplayer.close();server.close(()=>process.exit(0));setTimeout(()=>process.exit(0),8000).unref();}process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
