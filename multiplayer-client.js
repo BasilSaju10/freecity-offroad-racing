@@ -52,7 +52,7 @@ export function createMultiplayer({getState,getVehicle,isReady,onGrid,onVehicle=
    if(m.type==='notice'){document.getElementById('invite-status').textContent=m.message;}
    if(m.type==='pong')rtt=Date.now()-m.sent;
   };
-  ws.onclose=event=>{if(stopped)return;id=null;if(event?.code===4001){stopped=true;mode=null;room=null;remotes.clear();render();error.textContent='Driving is active in another tab. Reload this tab to take over.';error.hidden=false;open();return;}if(event?.code===4002){location.reload();return;}render();document.getElementById('online-count').textContent='Connection interrupted · Reconnecting';clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,Math.min(10000,500*2**retry++));};ws.onerror=()=>{};
+  ws.onclose=event=>{if(stopped)return;remotes.clear();id=null;if(event?.code===4001){stopped=true;mode=null;room=null;remotes.clear();render();error.textContent='Driving is active in another tab. Reload this tab to take over.';error.hidden=false;open();return;}if(event?.code===4002){location.reload();return;}render();document.getElementById('online-count').textContent='Connection interrupted · Reconnecting';clearTimeout(reconnectTimer);reconnectTimer=setTimeout(connect,Math.min(10000,500*2**retry++));};ws.onerror=()=>{};
  }
  function publish(){
   if(stopped)return;

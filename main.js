@@ -1,3 +1,4 @@
+import {createMinimap} from './minimap.js';
 import {createWeightTransfer} from './weight-transfer.js';
 import {createShiftDrift} from './shift-drift.js';
 import {createPivotBurnout} from './pivot-burnout.js';
@@ -338,6 +339,8 @@ async function loadCar(id='range-rover',authoritative=false){
 window.playground={app,world,vehicle,chassis,tuning,reset,get modelReady(){return modelReady;},map:testingGround};
 addEventListener('error',e=>{$('error').hidden=false;$('error').textContent='The playground could not start.\n'+e.message;});
 globalThis.offrideLoading?.stage(98,'Preparing your vehicle');selectCamera(0);app.start();await loadCar(activeVehicleId);if(!modelReady)throw Error('Could not prepare the selected vehicle');
+const minimap=createMinimap(testingGround);
+app.on('update',dt=>minimap.update(Math.min(dt,.1),chassis.position,chassis.quaternion));
 const remoteDrivers=createRemoteDrivers(pc,app,camera,vehicleProfiles,createHelmetDriver,vehicleAssets,testingGround);
 const checkpoint=new pc.Entity('Next race checkpoint');app.root.addChild(checkpoint);checkpoint.enabled=false;
 const checkpointMaterial=material('Race checkpoint',[.12,.65,.48]);checkpointMaterial.emissive=new pc.Color(.08,.4,.22);checkpointMaterial.update();
@@ -351,7 +354,7 @@ online=createMultiplayer({
  onGrid:pose=>{keys.clear();if(modelReady)reset(pose);else pendingNetworkPose=pose;},
  onLock:state=>{Object.assign(networkLock,state);$('more-vehicles').disabled=state.vehicle||carLoading;$('reset-track').disabled=state.freeze;},
  onMenu:open=>{keys.clear();paused=open||$('vehicle-picker').open;if(open){softMouseLook=false;canvas.style.cursor='grab';}},
- remotes:remoteDrivers,
+ remotes:{receive(players){remoteDrivers.receive(players);minimap.receive(players);},update:remoteDrivers.update,clear(){remoteDrivers.clear();minimap.clear();}},
  showCheckpoint:gate=>{checkpoint.enabled=!!gate?.point;if(gate?.point){const p=gate.point;checkpoint.setPosition(p[0],testingGround.heightAt(p[0],p[2])+.03,p[2]);if(gate.next)checkpoint.setEulerAngles(0,Math.atan2(gate.next[0]-p[0],gate.next[2]-p[2])*180/Math.PI,0);}}
 });
 
